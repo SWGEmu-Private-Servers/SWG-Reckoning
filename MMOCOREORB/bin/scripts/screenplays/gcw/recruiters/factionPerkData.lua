@@ -216,3 +216,4 @@ imperialRewardData = {
 		at_st = { type=factionRewardType.hireling, display="@mob/creature_names:at_st", item="object/intangible/pet/pet_control.iff", controlledObjectTemplate="at_st", cost=9450},
 	},
 }
+

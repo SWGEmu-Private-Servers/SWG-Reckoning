@@ -836,3 +836,5 @@ includeFile("weapon/ranged/objects.lua")
 includeFile("weapon/trap/objects.lua")
 includeFile("weapon/objects.lua")
 
+--Load Custom Content
+includeFile("../../custom_scripts/object/objects.lua")

@@ -264,7 +264,7 @@ function RebelHideoutScreenPlay:spawnMobiles()
 	spawnMobile("corellia", "rebel_commando", 300, -5.0, 0.1, -2.1, 119, 8205793)
 
 	-- East Building Interior
-	spawnMobile("corellia", "rebel_first_lieutenant", 300, 3.1, 0.1, 2.0, 84, 8285405)
+	spawnMobile("corellia", "rebel_high_general", 300, 3.1, 0.1, 2.0, 84, 8285405)
 	spawnMobile("corellia", "rebel_sergeant", 300, 5.4, 0.1, 2.3, -93, 8285405)
 	spawnMobile("corellia", "rebel_major", 300, 3.2, 0.1, 3.6, -153, 8285405)
 	spawnMobile("corellia", "rebel_staff_sergeant", 300, 4.1, 0.1, -3.6, 101, 8285406)
@@ -272,7 +272,7 @@ function RebelHideoutScreenPlay:spawnMobiles()
 	spawnMobile("corellia", "rebel_commando", 300, -5.0, 0.1, -2.1, 119, 8285407)
 
 	-- South East Building Interior
-	spawnMobile("corellia", "rebel_first_lieutenant", 300, 3.1, 0.1, 2.0, 84, 8285412)
+	spawnMobile("corellia", "rebel_high_general", 300, 3.1, 0.1, 2.0, 84, 8285412)
 	spawnMobile("corellia", "rebel_sergeant", 300, 5.4, 0.1, 2.3, -93, 8285412)
 	spawnMobile("corellia", "rebel_major", 300, 3.2, 0.1, 3.6, -153, 8285412)
 	spawnMobile("corellia", "rebel_staff_sergeant", 300, 4.1, 0.1, -3.6, 101, 8285413)

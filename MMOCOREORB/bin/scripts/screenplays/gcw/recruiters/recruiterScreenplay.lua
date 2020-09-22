@@ -629,3 +629,4 @@ function recruiterScreenplay:handleResign(pPlayer)
 	CreatureObject(pPlayer):setFactionStatus(0)
 	PlayerObject(pGhost):decreaseFactionStanding(oldFactionName, 0)
 end
+

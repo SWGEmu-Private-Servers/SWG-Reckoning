@@ -42,7 +42,7 @@
 
 
 object_building_player_player_house_corellia_large_style_02 = object_building_player_shared_player_house_corellia_large_style_02:new {
-	lotSize = 5,
+	lotSize = 4,
 	baseMaintenanceRate = 50,
 	allowedZones = {"corellia", "talus"},
 	publicStructure = 0,

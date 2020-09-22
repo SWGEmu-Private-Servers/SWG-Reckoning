@@ -250,3 +250,4 @@ function RecruiterConvoHandler:updateScreenWithPromotions(pPlayer, pConvTemplate
 
 	self:addRankReviewOption(faction, screenObject)
 end
+

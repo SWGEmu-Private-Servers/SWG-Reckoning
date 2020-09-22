@@ -78,6 +78,13 @@ function TatooineBestineScreenPlay:spawnMobiles()
 	pNpc = spawnMobile("tatooine", "imperial_recruiter",0,-1138,98,-3897,0,0)
 	self:setMoodString(pNpc, "npc_imperial")
 
+	pNpc = spawnMobile ("tatooine", "stormtrooper_commando",400,-1139,98,-3889,360,0)
+	self:setMoodString(pNpc, "npc_imperial")
+	pNpc = spawnMobile ("tatooine", "stormtrooper_commando",400,-1135,98,-3889,360,0)
+	self:setMoodString(pNpc, "npc_imperial")
+	pNpc = spawnMobile ("tatooine", "stormtrooper_commando",400,-1153,98,-3916,180,0)
+	self:setMoodString(pNpc, "npc_imperial")
+
 	--east Tavern -1074 -3640
 	pNpc = spawnMobile("tatooine", "commoner_technician",60,4.6,1.0,7.5,90,1528396)
 	self:setMoodString(pNpc, "npc_use_terminal_high")

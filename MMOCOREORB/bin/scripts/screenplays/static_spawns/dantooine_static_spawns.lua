@@ -36,5 +36,18 @@ function DantooineStaticSpawnsScreenPlay:spawnMobiles()
 
 	spawnMobile("dantooine", "dark_jedi_master", 3600, -738.2, 1.7, 2103.9, 55, 0)
 
+	spawnMobile("dantooine", "graul_marauder", 900, 6300, 0, 5016,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, 4951, 0, 6691,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -5802, 0, 6250,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -5040, 0, 5467,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -4915, 0, 4854,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -4800, 0, 3000,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -4860, 0, -2200,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -5372, 0, -4421,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -5091, 0, -4336,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -4918, 0, -4250,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, -4680, 0, -3946,0,0)
+	spawnMobile("dantooine", "graul_marauder", 900, 4295, 0, -5518,0,0)
+
 	--Need to add the rest of static spawns (Incomplete).
 end

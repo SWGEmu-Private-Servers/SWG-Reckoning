@@ -1,5 +1,5 @@
 CrackdownCantina = ScreenPlay:new {
-	isEnabled = false,
+	isEnabled = true,
 	cantinaPlanets = { "corellia", "naboo", "tatooine" },
 
 	cantinaOids = {

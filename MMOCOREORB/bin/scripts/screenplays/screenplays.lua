@@ -34,13 +34,13 @@ includeFile("playerTriggers.lua")
 includeFile("themepark/conversations/goru_conv_handler.lua")
 includeFile("themepark/conversations/mission_giver_conv_handler.lua")
 includeFile("themepark/conversations/mission_target_conv_handler.lua")
-includeFile("themepark/conversations/nym_conv_handler.lua")
+--includeFile("themepark/conversations/nym_conv_handler.lua")
 includeFile("themepark/conversations/theater_manager_conv_handler.lua")
 includeFile("themepark/conversations/audience_member_conv_handler.lua")
 includeFile("themepark/conversations/record_keeper_conv_handler.lua")
 includeFile("themepark/imperial/themeParkImperial.lua")
 includeFile("themepark/imperial/emperors_retreat.lua")
-includeFile("themepark/nym/themeParkNym.lua")
+--includeFile("themepark/nym/themeParkNym.lua")
 includeFile("themepark/rebel/themeParkRebel.lua")
 includeFile("themepark/jabba/themeParkJabba.lua")
 includeFile("themepark/valarian/themeParkValarian.lua")
@@ -64,10 +64,12 @@ includeFile("trainers/trainerData.lua")
 includeFile("trainers/skillTrainer.lua")
 includeFile("trainers/trainerConvHandler.lua")
 
+--[[
 -- GCW
 includeFile("gcw/newsnet.lua")
 includeFile("gcw/recruiters/recruiterConvoHandler.lua")
 includeFile("gcw/recruiters/recruiterScreenplay.lua")
+--]]
 includeFile("crackdown/cantina.lua")
 
 -- Quest Tasks
@@ -155,7 +157,7 @@ includeFile("dungeon/corellian_corvette/ticket_takers/ds_297.lua")
 includeFile("dungeon/corellian_corvette/ticket_takers/klaatu.lua")
 includeFile("dungeon/corellian_corvette/ticket_takers/lt_lance.lua")
 
-
+--[[
 -- Village
 includeFile("village/village_community_crafting.lua")
 includeFile("village/village_gm_sui.lua")
@@ -275,6 +277,7 @@ includeFile("jedi/padawan/convos/padawan_the_ring_02_conv_handler.lua")
 -- Jedi Objects
 includeFile("jedi/components/ForceShrineMenuComponent.lua")
 includeFile("jedi/components/TrialsSearchObjectMenuComponent.lua")
+--]]
 
 -- Events - Bestine Election
 includeFile("events/bestine_election/bestineElection.lua")
@@ -532,6 +535,7 @@ includeFile("caves/tatooine_sennex_cave.lua")
 includeFile("caves/tatooine_squill_cave.lua")
 includeFile("caves/tatooine_tusken_bunker.lua")
 
+--[[
 -- Cities
 includeFile("cities/city.lua")
 includeFile("cities/corellia_bela_vistal.lua")
@@ -568,6 +572,7 @@ includeFile("cities/tatooine_mos_taike.lua")
 includeFile("cities/tatooine_wayfar.lua")
 includeFile("cities/yavin4_labor_outpost.lua")
 includeFile("cities/yavin4_mining_outpost.lua")
+--]]
 
 -- POIs
 includeFile("poi/corellia_rogue_corsec_base.lua")
@@ -669,5 +674,5 @@ includeFile("tests/tests.lua")
 -- Server Event Automation
 includeFile("events/ServerEventAutomation.lua")
 
--- Custom content - Loads last to allow for overrides
-includeFile("../custom_scripts/screenplays/screenplays.lua")
+--Load Custom Content
+includeFile("../../custom_scripts/screenplays/screenplays.lua")

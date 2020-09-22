@@ -33,7 +33,7 @@ function buffTerminalMenuComponent:handleObjectMenuSelect(pSceneObject, pPlayer,
 	end
 
 	if selectedID == 20 then
-		CreatureObject(pPlayer):enhanceCharacter()
+		CreatureObject(pPlayer):builderEnhanceCharacter()
 		buffTerminalMenuComponent:logUsage(pPlayer, "enhanceCharacter")
 	elseif selectedID == 21 then
 		for i = 0, 8 do

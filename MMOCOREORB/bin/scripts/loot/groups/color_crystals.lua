@@ -5,7 +5,27 @@ color_crystals = {
 	minimumLevel = 0,
 	maximumLevel = 0,
 	lootItems = {
-		{itemTemplate = "force_color_crystal", weight = 10000000}
+		{itemTemplate = "force_color_crystal", weight = 5000000},
+		{itemTemplate = "force_crystal_baass_wisdom", weight = 250000},
+		{itemTemplate = "force_crystal_banes_heart", weight = 250000},
+		{itemTemplate = "force_crystal_bnars_sacrifice", weight = 250000},
+		{itemTemplate = "force_crystal_bondaras_folly", weight = 250000},
+		{itemTemplate = "force_crystal_dawn_of_dagobah", weight = 250000},
+		{itemTemplate = "force_crystal_gallias_intuition", weight = 250000},
+		{itemTemplate = "force_crystal_horns_future", weight = 250000},
+		{itemTemplate = "force_crystal_kenobis_legacy", weight = 250000},
+		{itemTemplate = "force_crystal_kits_ferocity", weight = 250000},
+		{itemTemplate = "force_crystal_kuns_blood", weight = 250000},
+		{itemTemplate = "force_crystal_kylos_fury", weight = 250000},
+		{itemTemplate = "force_crystal_mauls_vengence", weight = 250000},
+		{itemTemplate = "force_crystal_mundis_response", weight = 250000},
+		{itemTemplate = "force_crystal_prowess_of_plo_koon", weight = 250000},
+		{itemTemplate = "force_crystal_qui_gons_devotion", weight = 250000},
+		{itemTemplate = "force_crystal_quintessence_of_the_force", weight = 250000},
+		{itemTemplate = "force_crystal_strength_of_luminaria", weight = 250000},
+		{itemTemplate = "force_crystal_sunriders_destiny", weight = 250000},
+		{itemTemplate = "force_crystal_ulics_redemption", weight = 250000},
+		{itemTemplate = "force_crystal_windus_guile", weight = 250000}
 	}
 }
 
