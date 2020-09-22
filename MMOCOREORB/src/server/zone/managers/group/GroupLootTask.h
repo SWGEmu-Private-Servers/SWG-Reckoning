@@ -77,11 +77,13 @@ public:
 
 			gclocker.release();
 			splitCredits();
+			splitReckoningCredits();
 			GroupManager::instance()->createLottery(group, corpse);
 			return;
 		case GroupManager::RANDOM:
 			gclocker.release();
 			splitCredits();
+			splitReckoningCredits();
 			if (lootContainer->getContainerObjectsSize() < 1) {
 				StringIdChatParameter noItems("group", "corpse_empty");
 				player->sendSystemMessage(noItems); //"This corpse has no items in its inventory."
@@ -98,6 +100,7 @@ public:
 		if (lootAll) {
 			gclocker.release();
 			splitCredits();
+			splitReckoningCredits();
 
 			Locker lootAllLocker(player, corpse);
 			player->getZoneServer()->getPlayerManager()->lootAll(player, corpse);
@@ -222,6 +225,81 @@ public:
 			TransactionLog trx(corpse, TrxCode::NPCLOOT, corpse->getCashCredits(), true);
 			corpse->clearCashCredits();
 		}
+	}
+
+	void splitReckoningCredits() {
+		//Pre: Corpse is locked.
+		//Post: Corpse is locked.
+
+		int lootCredits = corpse->getReckoningCredits();
+
+		if (lootCredits < 1)
+			return;
+
+		Locker clocker(group, corpse);
+
+		//Determine eligible group members to give credits.
+		Vector<CreatureObject*> payees;
+		for (int i = 0; i < group->getGroupSize(); ++i) {
+			ManagedReference<CreatureObject*> object = group->getGroupMember(i);
+			if (object == nullptr || !object->isPlayerCreature())
+				continue;
+
+			if (!object->isInRange(corpse, 128.f))
+				continue;
+
+			if (object->getLevel() - corpse->getLevel() > 10)
+				continue;
+
+			payees.add(object);
+		}
+
+		if (payees.size() == 0)
+			return;
+
+		//Send initial system message to the looter.
+		player->sendSystemMessage("You loot " + String::valueOf(lootCredits) + " Reckoning Credits from " + corpse->getDisplayedName() + ".");
+
+		//Send initial system message to everyone in group except the looter.
+		group->sendSystemMessage("[GROUP] " + player->getDisplayedName() + " looted " + String::valueOf(lootCredits) + " Reckoning Credits from " + corpse->getDisplayedName() + ".");
+
+		clocker.release();
+
+		//Figure out how many credits each member gets.
+		int memberBaseCredits = lootCredits / payees.size();
+		int memberOddCredits = lootCredits % payees.size();
+
+		//Create one cash payout per payee.
+		Vector<int> cashPayouts;
+		for (int i = 0; i < payees.size(); ++i) {
+			int payout = memberBaseCredits;
+			if (memberOddCredits > 0) {
+				payout += 1;
+				memberOddCredits -= 1;
+			}
+			cashPayouts.add(payout);
+		}
+
+		//Hand out the payouts randomly since some may be larger.
+		for (int i = 0; i < payees.size(); ++i) {
+			CreatureObject* payee = payees.get(i);
+			int random = System::random(cashPayouts.size() - 1);
+			int payout = cashPayouts.get(random);
+			cashPayouts.remove(random);
+
+			Locker plocker(payee, corpse);
+
+			payee->addReckoningCredits(payout);
+
+			//Send credit split system message.
+			if (payee == player) {
+				player->sendSystemMessage("[GROUP] You split " + String::valueOf(lootCredits) + " Reckoning Credits and receive " + String::valueOf(payout) + " Reckoning Credits as your share.");
+			} else {
+				payee->sendSystemMessage("[GROUP] You receive " + String::valueOf(payout) + " Reckoning Credits as your share.");
+			}
+		}
+
+		corpse->clearCashCredits();
 	}
 
 	bool membersInRange() {

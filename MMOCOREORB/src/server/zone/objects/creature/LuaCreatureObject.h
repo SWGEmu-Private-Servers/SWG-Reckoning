@@ -112,7 +112,7 @@ namespace creature {
 		int isInCombat(lua_State* L);
 		int healDamage(lua_State* L);
 		int getGroupID(lua_State* L);
-		int enhanceCharacter(lua_State* L);
+		int builderEnhanceCharacter(lua_State* L);
 		int setWounds(lua_State* L);
 		int setShockWounds(lua_State* L);
 		int getForceSensitiveSkillCount(lua_State* L);
@@ -123,6 +123,9 @@ namespace creature {
 		int getGender(lua_State* L);
 		int isRidingMount(lua_State* L);
 		int dismount(lua_State* L);
+		int getReckoningCredits(lua_State* L);
+		int subtractReckoningCredits(lua_State* L);
+		int addReckoningCredits(lua_State* L);
 	private:
 		// The pointer to the 'real object' defined in object.cc
 		CreatureObject* realObject;

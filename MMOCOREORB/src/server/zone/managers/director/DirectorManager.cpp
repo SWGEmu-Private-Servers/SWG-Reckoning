@@ -19,6 +19,7 @@
 #include "server/zone/objects/region/LuaCityRegion.h"
 #include "server/zone/packets/cell/UpdateCellPermissionsMessage.h"
 #include "server/zone/managers/structure/tasks/DestroyStructureTask.h"
+#include "server/zone/managers/structure/tasks/DestroyPackedupStructureTask.h"
 #include "server/zone/managers/object/ObjectManager.h"
 #include "server/zone/managers/structure/StructureManager.h"
 #include "server/zone/managers/faction/FactionManager.h"
@@ -430,6 +431,7 @@ void DirectorManager::initializeLuaEngine(Lua* luaEngine) {
 	luaEngine->registerFunction("spawnTheaterObject", spawnTheaterObject);
 	luaEngine->registerFunction("getSchematicItemName", getSchematicItemName);
 	luaEngine->registerFunction("getBadgeListByType", getBadgeListByType);
+	luaEngine->registerFunction("getRandomSpawnPoint", getRandomSpawnPoint);
 
 	//Navigation Mesh Management
 	luaEngine->registerFunction("createNavMesh", createNavMesh);
@@ -2187,8 +2189,14 @@ int DirectorManager::destroyBuilding(lua_State* L) {
 	if (pendingTask != nullptr)
 		return 0;
 
-	Reference<DestroyStructureTask*> task = new DestroyStructureTask(building);
-	task->execute();
+	if (building->isPackedUp()) {
+		Reference<DestroyPackedupStructureTask*> task = new DestroyPackedupStructureTask(building);
+		task->execute();
+	} else {
+		Reference<DestroyStructureTask*> task = new DestroyStructureTask(building);
+		task->execute();
+	}
+
 	return 1;
 }
 
@@ -3701,4 +3709,66 @@ int DirectorManager::getBadgeListByType(lua_State* L) {
 	}
 
 	return 1;
+}
+
+int DirectorManager::getRandomSpawnPoint(lua_State* L) {
+	int numberOfArguments = lua_gettop(L);
+	if (numberOfArguments != 3) {
+		String err = "incorrect number of arguments passed to DirectorManager::getSpawnPoint";
+		printTraceError(L, err);
+		ERROR_CODE = INCORRECT_ARGUMENTS;
+		return 0;
+	}
+
+	float maximumDistance = lua_tonumber(L, -1);
+	float minimumDistance = lua_tonumber(L, -2);
+	String zoneName = lua_tostring(L, -3);
+
+	Zone* zone = ServerCore::getZoneServer()->getZone(zoneName);
+
+	if (zone == nullptr) {
+		String err = "Zone is null in DirectorManager::getRandomSpawnPoint";
+		printTraceError(L, err);
+		ERROR_CODE = GENERAL_ERROR;
+		return 0;
+	}
+
+	Vector3 position;
+	bool found = false;
+	float minX = zone->getMinX(), maxX = zone->getMaxX();
+	float minY = zone->getMinY(), maxY = zone->getMaxY();
+	float diameterX = maxX - minX;
+	float diameterY = maxY - minY;
+	int retries = 50;
+
+	while (!found && retries > 0) {
+		float x = System::random(diameterX) + minX;
+		float y = System::random(diameterY) + minY;
+		position = generateSpawnPoint(zoneName, x, y, minimumDistance, maximumDistance, 5.0, 20, false);
+
+		if (position != Vector3(0, 0, 0))
+			found = true;
+
+		retries--;
+	}
+
+	if (retries == 0) {
+		position.set(0, 0, 0);
+	}
+
+	if (position != Vector3(0, 0, 0)) {
+		lua_newtable(L);
+		lua_pushnumber(L, position.getX());
+		lua_pushnumber(L, position.getZ());
+		lua_pushnumber(L, position.getY());
+		lua_rawseti(L, -4, 3);
+		lua_rawseti(L, -3, 2);
+		lua_rawseti(L, -2, 1);
+		return 1;
+	} else {
+		String err = "position is null in DirectorManager::getRandomSpawnPoint";
+		printTraceError(L, err);
+		ERROR_CODE = GENERAL_ERROR;
+		return 0;
+	}
 }

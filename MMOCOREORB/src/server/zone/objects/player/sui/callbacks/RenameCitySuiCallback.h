@@ -92,23 +92,23 @@ public:
 		String oldName = cityObject->getRegionName();
 		bool isRegistered = cityObject->isRegistered();
 
-		if(isRegistered)
+		if (isRegistered)
 			cityManager->unregisterCity(cityObject, creature);
 
 		cityObject->setCustomRegionName(cityName);
 
-		if(cityObject->hasShuttleInstallation()) {
+		if (cityObject->hasShuttleInstallation()) {
 			Reference<PlanetTravelPoint*> tp = planetManager->getPlanetTravelPoint(oldName);
 
-			if(tp != nullptr) {
+			if (tp != nullptr) {
 				Reference<PlanetTravelPoint*> newTP = tp;
-				newTP->setPointName(cityName);
+				newTP->setPointName(cityObject->getRegionName());
 				planetManager->removePlayerCityTravelPoint(oldName);
 				planetManager->addPlayerCityTravelPoint(newTP);
 			}
 		}
 
-		if(isRegistered)
+		if (isRegistered)
 			cityManager->registerCity(cityObject, creature);
 
 		creature->addCooldown("rename_city_cooldown", 604800 * 4); // 4 week cooldown.  need to investigate

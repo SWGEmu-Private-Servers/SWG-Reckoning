@@ -132,7 +132,12 @@ public:
 		Lua luaInstance;
 		luaInstance.init();
 
-		if (!luaInstance.runFile("scripts/managers/crafting/visible_components.lua"))
+		bool res = luaInstance.runFile("custom_scripts/managers/crafting/visible_components.lua");
+
+		if (!res)
+			res = luaInstance.runFile("scripts/managers/crafting/visible_components.lua");
+
+		if (!res)
 			return;
 
 		// Read and create all the items in the config unless they

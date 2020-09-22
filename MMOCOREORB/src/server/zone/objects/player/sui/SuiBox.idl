@@ -266,6 +266,10 @@ class SuiBox extends ManagedObject implements Logger {
 		return false;
 	}
 
+	public abstract boolean isETerminalBox() {
+		return false;
+	}
+
 	public abstract boolean isColorPicker() {
 		return false;
 	}

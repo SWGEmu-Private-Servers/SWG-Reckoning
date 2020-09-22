@@ -8,6 +8,7 @@
 #include "server/zone/objects/creature/events/ThrowTrapTask.h"
 #include "templates/tangible/TrapTemplate.h"
 
+
 class ThrowTrapCommand: public CombatQueueCommand {
 public:
 
@@ -54,13 +55,47 @@ public:
 			ManagedReference<CreatureObject*> targetCreature =
 					server->getZoneServer()->getObject(target).castTo<CreatureObject*>();
 
-			if (targetCreature == nullptr || !targetCreature->isCreature()) {
-				creature->sendSystemMessage("@trap/trap:sys_creatures_only");
+			if (targetCreature == nullptr) {
+				creature->sendSystemMessage("Invalid Target");
 				return GENERALERROR;
 			}
 
-			if (!targetCreature->isAttackableBy(creature) || targetCreature->isPet()) {
-				creature->sendSystemMessage("@trap/trap:sys_no_pets");
+			if (!targetCreature->isAttackableBy(creature)) {
+				creature->sendSystemMessage("Invalid Target");
+				return GENERALERROR;
+			}
+
+			if (ConfigManager::instance()->getPvpTrapEnabled()) {
+				if (targetCreature->isPlayerCreature()) {
+					if (!targetCreature->hasSkill("force_title_jedi_rank_02") || !creature->hasBountyMissionFor(targetCreature)) {
+						creature->sendSystemMessage("@trap/trap:sys_creatures_only");
+						return GENERALERROR;
+					}
+				} else if (targetCreature->isPet()) {
+					ManagedReference<CreatureObject*> owner = targetCreature->getLinkedCreature().get();
+
+					if (!owner->hasSkill("force_title_jedi_rank_02") || !creature->hasBountyMissionFor(owner)) {
+						creature->sendSystemMessage("@trap/trap:sys_creatures_only");
+						return GENERALERROR;
+					}
+				} else if (!targetCreature->isCreature()) {
+					creature->sendSystemMessage("@trap/trap:sys_creatures_only");
+					return GENERALERROR;
+				}
+			} else {
+				if (targetCreature == nullptr || !targetCreature->isCreature()) {
+					creature->sendSystemMessage("@trap/trap:sys_creatures_only");
+					return GENERALERROR;
+				}
+
+				if (!targetCreature->isAttackableBy(creature) || targetCreature->isPet()) {
+					creature->sendSystemMessage("@trap/trap:sys_no_pets");
+					return GENERALERROR;
+				}
+			}
+
+			if (targetCreature->hasTrapImmunity()) {
+				creature->sendSystemMessage("Your target is immune to traps.");
 				return GENERALERROR;
 			}
 
@@ -126,7 +161,12 @@ public:
 			uint32 crc = String(animation).hashCode();
 			CombatAction* action = new CombatAction(creature, targetCreature, crc, hit, 0L);
 			creature->broadcastMessage(action, true);
-			creature->addCooldown("throwtrap", 1500);
+
+			if (targetCreature->isPlayerCreature() || targetCreature->isPet()) {
+				creature->addCooldown("throwtrap", 15000); //15 Seconds
+			} else {
+				creature->addCooldown("throwtrap", 1500);
+			}
 
 			Locker clocker(trap, creature);
 
@@ -137,10 +177,20 @@ public:
 			int damage = 0;
 
 			if (hit) {
+				int duration = trapData->getDuration();
+				int immunityDuration = ConfigManager::instance()->getPvpTrapImmunityDuration();
+
+				if (ConfigManager::instance()->getPvpTrapEnabled()) {
+					if (targetCreature->isPlayerCreature() || targetCreature->isPet()) {
+						Locker targetLocker(targetCreature);
+						targetCreature->updateTrapImmunityTime(immunityDuration);
+						duration = ConfigManager::instance()->getPvpTrapDuration();
+					}
+				}
 
 				message.setStringId("trap/trap" , trapData->getSuccessMessage());
 
-				buff = new Buff(targetCreature, crc, trapData->getDuration(), BuffType::STATE);
+				buff = new Buff(targetCreature, crc, duration, BuffType::STATE);
 
 				Locker locker(buff);
 

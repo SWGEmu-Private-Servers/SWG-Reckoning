@@ -16,6 +16,8 @@
 #include "LootGroupMap.h"
 #include "server/zone/objects/tangible/component/lightsaber/LightsaberCrystalComponent.h"
 
+#include "server/zone/objects/group/GroupObject.h"
+
 void LootManagerImplementation::initialize() {
 	info("Loading configuration.");
 
@@ -58,7 +60,12 @@ bool LootManagerImplementation::loadConfigData() {
 	Lua* lua = new Lua();
 	lua->init();
 
-	if (!lua->runFile("scripts/managers/loot_manager.lua")) {
+	bool res = lua->runFile("custom_scripts/managers/loot_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/loot_manager.lua");
+
+	if (!res) {
 		delete lua;
 		return false;
 	}
@@ -254,6 +261,39 @@ int LootManagerImplementation::calculateLootCredits(int level) {
 	int credits = mincredits + System::random(maxcredits - mincredits);
 
 	return credits;
+}
+
+int LootManagerImplementation::calculateReckoningLootCredits(CreatureObject* object, AiAgent* creature) {
+	int reckoningCredits = 0;
+
+	if (object == nullptr || creature == nullptr)
+		return reckoningCredits;
+
+	if (object->getLevel() - creature->getLevel() > 10)
+		return reckoningCredits;
+
+	if (object->isGrouped()) {
+		ManagedReference<GroupObject*> group = object->getGroup();
+
+		if (group != nullptr) {
+			for (int i = 0; i < group->getGroupSize(); i++) {
+				ManagedReference<CreatureObject*> groupMember = group->getGroupMember(i);
+
+				if (groupMember->isPlayerCreature() && groupMember->isInRange(object, 128.f)) {
+					if (groupMember->getLevel() - creature->getLevel() > 10)
+						continue;
+					if (!groupMember->isInRange(creature, 128.f))
+						continue;
+
+					reckoningCredits += System::random(3 - 1) + 1;
+				}
+			}
+		}
+	} else {
+		reckoningCredits = System::random(3 - 1) + 1;;
+	}
+
+	return reckoningCredits;
 }
 
 TangibleObject* LootManagerImplementation::createLootObject(const LootItemTemplate* templateObject, int level, bool maxCondition) {
@@ -486,8 +526,36 @@ TangibleObject* LootManagerImplementation::createLootObject(const LootItemTempla
 	if (!maxCondition)
 		addConditionDamage(prototype, craftingValues);
 
-	delete craftingValues;
+	if (prototype->isAttachment()){
+		Attachment* attachment = cast<Attachment*>( prototype.get());
 
+		HashTable<String, int>* mods = attachment->getSkillMods();
+		HashTableIterator<String, int> iterator = mods->iterator();
+		StringId name;
+		String customName = "";
+		String key = "";
+		int value = 0;
+		int last = 0;
+		String attachmentType = "AA ";
+
+		if (attachment->isClothingAttachment())
+			attachmentType = "CA ";
+
+		for (int i = 0; i < mods->size(); ++i) {
+			iterator.getNextKeyAndValue(key, value);
+
+			if (value > last) {
+				last = value;
+				name.setStringId("stat_n", key);
+				prototype->setObjectName(name, false);
+				customName = attachmentType + prototype->getDisplayedName() + " " + String::valueOf(value);
+			}
+		}
+
+		prototype->setCustomObjectName(customName, false);
+	}
+
+	delete craftingValues;
 	return prototype;
 }
 

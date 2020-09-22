@@ -138,7 +138,15 @@ public:
 		loadCommandData("datatables/command/command_tables_shared.iff");
 		loadCommandData("datatables/command/command_tables_shared_ground.iff");
 		//loadCommandData("datatables/command/command_tables_shared_space.iff"); disabled cause taunt is conflicting
-		bool res = runFile("scripts/commands/commands.lua");
+
+		bool res = runFile("custom_scripts/commands/commands.lua");
+
+		if (res) {
+			info("Loading Custom Commands....");
+		} else {
+			res = runFile("scripts/commands/commands.lua");
+			info("Loading Default SWGEmu Commands....");
+		}
 
 		if (!res)
 			ERROR_CODE = GENERAL_ERROR;

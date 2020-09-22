@@ -5,6 +5,7 @@
 #include "StatusServer.h"
 #include "StatusHandler.h"
 
+
 StatusServer::StatusServer(ConfigManager* conf, ZoneServer* server)
 		: StreamServiceThread("StatusServer") {
 	zoneServer = server;
@@ -65,6 +66,38 @@ ServiceClient* StatusServer::createConnection(Socket* sock, SocketAddress& addr)
 Packet* StatusServer::getStatusXMLPacket() {
 	Packet* pack = new Packet();
 
+	int connectedPlayers = zoneServer->getConnectionCount();
+	int maxPlayers = zoneServer->getMaxPlayers();
+	int totalPlayers = zoneServer->getTotalPlayers();
+	StringBuffer ConnectedPlayers;
+	StringBuffer MaxPlayers;
+	StringBuffer TotalPlayers;
+
+	if (ConfigManager::instance()->getPopDisplayEnabled()) {
+		if (ConfigManager::instance()->getLoadDisplayEnabled()) {
+			TotalPlayers << "Unavailable";
+			MaxPlayers << "Unavailable";
+			if (connectedPlayers >= zoneServer->getServerCap())
+				ConnectedPlayers << "Full";
+			else if (connectedPlayers >= ConfigManager::instance()->getVeryHeavyLoad())
+				ConnectedPlayers << "Very Heavy";
+			else if (connectedPlayers >= ConfigManager::instance()->getHeavyLoad())
+				ConnectedPlayers << "Heavy";
+			else if (connectedPlayers >= ConfigManager::instance()->getMediumLoad())
+				ConnectedPlayers << "Medium";
+			else
+				ConnectedPlayers << "Light";
+		} else {
+			ConnectedPlayers << connectedPlayers;
+			MaxPlayers << maxPlayers;
+			TotalPlayers << totalPlayers;
+		}
+	} else {
+		ConnectedPlayers << "Unavailable";
+		TotalPlayers << "Unavailable";
+		MaxPlayers << "Unavailable";
+	}
+
 	StringBuffer str;
 	str << "<?xml version=\"1.0\" standalone=\"yes\"?>" << endl;
 	str << "<zoneServer>" << endl;
@@ -72,13 +105,12 @@ Packet* StatusServer::getStatusXMLPacket() {
 	if ((lastStatus = testZone())) {
 		str << "<name>" << zoneServer->getGalaxyName() << "</name>" << endl;
 		str << "<status>up</status>" << endl;
-		str << "<users>" << endl;
-		str << "<connected>" << zoneServer->getConnectionCount() << "</connected>" << endl;
+		str << "<connected>" << ConnectedPlayers.toString() << "</connected>" << endl;
 		str << "<cap>" << zoneServer->getServerCap() << "</cap>" << endl;
-		str << "<max>" << zoneServer->getMaxPlayers() << "</max>" << endl;
-		str << "<total>" << zoneServer->getTotalPlayers() << "</total>" << endl;
+		str << "<max>" << MaxPlayers.toString() << "</max>" << endl;
+		str << "<total>" << TotalPlayers.toString() << "</total>" << endl;
 		str << "<deleted>" << zoneServer->getDeletedPlayers() << "</deleted>" << endl;
-		str << "</users>" << endl;
+		str << "<state>" << zoneServer->getServerState() << "</state>" << endl;
 		str << "<uptime>" << zoneServer->getStartTimestamp()->miliDifference(timestamp) / 1000 << "</uptime>" << endl;
 	} else
 		str << "<status>down</status>";

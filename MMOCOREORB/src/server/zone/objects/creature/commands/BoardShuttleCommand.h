@@ -12,6 +12,7 @@
 #include "QueueCommand.h"
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/tangible/ticket/TicketObject.h"
+#include "server/zone/objects/player/FactionStatus.h"
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/player/sui/SuiWindowType.h"
 #include "server/zone/objects/player/sui/listbox/SuiListBox.h"
@@ -91,6 +92,18 @@ public:
 		if (!closestPoint->isPoint("naboo","Theed Spaceport")){
 			if (!planetManager->checkShuttleStatus(creature, shuttle))
 				return GENERALERROR;
+		}
+
+		PlayerObject* ghost = creature->getPlayerObject();
+
+		if (ghost == nullptr)
+			return GENERALERROR;
+
+		if (creature->getFactionStatus() == FactionStatus::OVERT || ghost->hasGcwTef() || ghost->hasBhTef() || ghost->hasCityTef()) {
+			if (creature->isInCombat()) {
+				creature->sendSystemMessage("You can not use this shuttle while in PvP combat.");
+				return GENERALERROR;
+			}
 		}
 
 		uint64 ticketoid = target;
@@ -194,7 +207,14 @@ public:
 			y = p.getPositionY() + cos(dirRadians) * distance;
 		}
 
+		if (departCity != nullptr)
+			departCity->notifyExit(creature);
+
 		creature->switchZone(arrivalZone->getZoneName(), x, p.getPositionZ(), y, 0);
+
+		//Update Spawn Protection Time Stamp
+		if (ConfigManager::instance()->getSpawnProtectionEnabled())
+			ghost->updateSpawnProtectionTimestamp();
 
 		// Update the nearest mission for group waypoint for both the arrival and departure planet.
 		if (creature->isGrouped()) {

@@ -15,6 +15,8 @@
 #include "server/zone/packets/chat/ChatOnLeaveRoom.h"
 #include "server/zone/managers/player/PlayerManager.h"
 
+#include "templates/faction/Factions.h"
+
 void ChatRoomImplementation::init(ZoneServer* serv, ChatRoom* parent, const String& roomName) {
 	server = serv;
 	manager = server->getChatManager();
@@ -262,6 +264,8 @@ int ChatRoomImplementation::checkEnterPermission(CreatureObject* player) {
 	if (player == nullptr || !canEnterRoom)
 		return ChatManager::NOTINVITED;
 
+	PlayerObject* ghost = player->getPlayerObject();
+
 	switch (roomType) {
 	case ChatRoom::DEFAULT:
 		return ChatManager::SUCCESS;
@@ -291,13 +295,30 @@ int ChatRoomImplementation::checkEnterPermission(CreatureObject* player) {
 		}
 		return ChatManager::NOTINVITED;
 	}
-	case ChatRoom::CUSTOM:
+	case ChatRoom::CUSTOM: {
 		if (hasBanned(player))
 			return ChatManager::INVALIDBANSTATE;
 		if (isPrivate() && (!hasInvited(player) && player->getObjectID() != getOwnerID()))
 			return ChatManager::NOTINVITED;
 
 		return ChatManager::SUCCESS;
+	}
+	case ChatRoom::IMPERIAL: {
+		if (ghost != nullptr && ghost->isPrivileged())
+			return ChatManager::SUCCESS;
+		if (player->getFaction() == Factions::FACTIONIMPERIAL)
+			return ChatManager::SUCCESS;
+
+		return ChatManager::NOTINVITED;
+	}
+	case ChatRoom::REBEL: {
+		if (ghost != nullptr && ghost->isPrivileged())
+			return ChatManager::SUCCESS;
+		if (player->getFaction() == Factions::FACTIONREBEL)
+			return ChatManager::SUCCESS;
+
+		return ChatManager::NOTINVITED;
+	}
 
 	default:
 		break;

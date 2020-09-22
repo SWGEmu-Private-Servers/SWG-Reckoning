@@ -252,3 +252,4 @@ class FrsRank extends ManagedObject {
 		arenaChallengeScore = chal;
 	}
 }
+

@@ -30,6 +30,9 @@
 #include "pathfinding/RecastNavMesh.h"
 #include "server/zone/objects/pathfinding/NavArea.h"
 
+#include "templates/faction/Factions.h"
+#include "templates/params/creature/CreatureFlag.h"
+
 int BoardShuttleCommand::MAXIMUM_PLAYER_COUNT = 3000;
 
 void CityRegionImplementation::initializeTransientMembers() {
@@ -212,6 +215,8 @@ void CityRegionImplementation::notifyEnter(SceneObject* object) {
 
 	if (object->isCreatureObject()) {
 		CreatureObject* creature = cast<CreatureObject*>(object);
+		PlayerObject* ghost = creature->getPlayerObject();
+		ManagedReference<CityRegion*> city = creature->getCityRegion();
 
 		StringIdChatParameter params("city/city", "city_enter_city"); //You have entered %TT (%TO).
 		params.setTT(getRegionName());
@@ -220,15 +225,30 @@ void CityRegionImplementation::notifyEnter(SceneObject* object) {
 
 		if (citySpecialization.isEmpty()) {
 			params.setTO(strRank);
-		}
-		else {
+		} else {
 			UnicodeString citySpec = StringIdManager::instance()->getStringId(citySpecialization.hashCode());
 			params.setTO(strRank + ", " + citySpec);
 		}
 
 		creature->sendSystemMessage(params);
-
 		applySpecializationModifiers(creature);
+
+		unsigned int cityAlignment = city->getFactionAlignment();
+		String faction;
+
+		if (cityAlignment == Factions::FACTIONIMPERIAL)
+			faction = "Imperial Stronghold";
+		else if (cityAlignment == Factions::FACTIONREBEL)
+			faction = "Rebel Stronghold";
+
+		if (ConfigManager::instance()->getTefEnabled() && ConfigManager::instance()->getCityTefEnabled()) {
+			if (ghost != nullptr && cityAlignment != 0 && creature->getFaction() != cityAlignment && creature->getFaction() != 0) {
+				ghost->setHasCityTef(true);
+				creature->setPvpStatusBit(CreatureFlag::TEF);
+				creature->broadcastPvpStatusBitmask();
+				creature->sendSystemMessage("You have entered an " + faction + ". You have gained a City PvP TEF while inside city limits.");
+			}
+		}
 	}
 
 	if (object->isStructureObject()) {
@@ -283,6 +303,10 @@ void CityRegionImplementation::notifyEnter(SceneObject* object) {
 		zone->registerObjectWithPlanetaryMap(object);
 	}
 
+	if (registered && cityBazaarTerminals.contains(object)) {
+		zone->registerObjectWithPlanetaryMap(object);
+	}
+
 	if (!registered && citySkillTrainers.contains(object)) {
 		zone->unregisterObjectWithPlanetaryMap(object);
 	}
@@ -332,13 +356,25 @@ void CityRegionImplementation::notifyExit(SceneObject* object) {
 
 	if (object->isCreatureObject()) {
 		CreatureObject* creature = cast<CreatureObject*>(object);
+		PlayerObject* ghost = creature->getPlayerObject();
 
 		StringIdChatParameter params("city/city", "city_leave_city"); //You have left %TO.
 		params.setTO(getRegionName());
 
 		creature->sendSystemMessage(params);
-
 		removeSpecializationModifiers(creature);
+
+		if (ghost != nullptr && ghost->hasCityTef()) {
+			if (!ghost->hasGcwTef() && !ghost->hasBhTef())
+				creature->clearPvpStatusBit(CreatureFlag::TEF);
+
+			ghost->setHasCityTef(false);
+			creature->broadcastPvpStatusBitmask();
+			creature->sendSystemMessage("You have left city limits, if not in combat, your TEF was removed.");
+
+			if (creature->isInCombat())
+				ghost->updateLastPvpCombatActionTimestamp(true, false, false);
+		}
 	}
 
 	if (object->isStructureObject()) {
@@ -636,8 +672,23 @@ void CityRegionImplementation::cancelTasks() {
 }
 
 String CityRegionImplementation::getRegionName() {
-	if(!customRegionName.isEmpty())
-		return customRegionName;
+	unsigned int cityAlignment = getFactionAlignment();
+	String faction;
+
+	if (cityAlignment == Factions::FACTIONIMPERIAL)
+		faction = "\\#FFFF00[Imperial] ";
+	else if (cityAlignment == Factions::FACTIONREBEL)
+		faction = "\\#FFFF00[Rebel] ";
+	else
+		faction = "\\#FFFF00[Neutral] ";
+
+	if (!customRegionName.isEmpty()) {
+		if (ConfigManager::instance()->getTefEnabled() && ConfigManager::instance()->getCityTefEnabled()) {
+			return faction + "\\#FFFFFF" + customRegionName;
+		} else {
+			return customRegionName;
+		}
+	}
 
 	return regionName.getFullPath();
 }

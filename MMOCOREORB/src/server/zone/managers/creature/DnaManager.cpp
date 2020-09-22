@@ -43,7 +43,11 @@ DnaManager::~DnaManager() {
 void DnaManager::loadSampleData() {
 	info("Loading DNA Information",true);
 	try {
-		lua->runFile("scripts/managers/dna_manager.lua");
+		bool res = lua->runFile("custom_scripts/managers/dna_manager.lua");
+
+		if (!res)
+			res = lua->runFile("scripts/managers/dna_manager.lua");
+
 		// pull stat balcne out and set it up.
 		LuaObject luaObject = lua->getGlobalObject("DNACharacteristics");
 

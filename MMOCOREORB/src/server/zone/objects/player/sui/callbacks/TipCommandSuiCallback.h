@@ -11,6 +11,9 @@
 #include "server/zone/objects/player/sui/SuiCallback.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
+#include "server/zone/managers/log/ReckoningLogManager.h"
+#include "server/zone/managers/log/LogType.h"
+
 class TipCommandSuiCallback: public SuiCallback {
 private:
 	ManagedReference<CreatureObject*> targetPlayer;
@@ -41,12 +44,36 @@ public:
 			return;
 		}
 
+		ManagedReference<ReckoningLogManager*> logMan = player->getZoneServer()->getReckoningLogManager();
+		if (logMan == nullptr)
+			return;
+
+		PlayerObject* ghost = player->getPlayerObject();
+		if (ghost == nullptr)
+			return;
+
 		// Perform the bank tip
 		Locker clocker(targetPlayer, player);
 
 		TransactionLog trx(player, targetPlayer, TrxCode::PLAYERTIP, amount, false);
 		TransactionLog trxFee(player, TrxCode::TIPSURCHARGE, surcharge, false);
 		trxFee.groupWith(trx);
+
+		StringBuffer logEntry;
+		logEntry << player->getFirstName() << " bank tipped " << amount << " credits to " << targetPlayer->getFirstName();
+		logMan->logAction(LogType::PLAYERTIP, logEntry.toString());
+
+		if (amount >= 5000000) {
+			StringBuffer logEntry;
+			logEntry << player->getFirstName() << " bank tipped " << amount << " credits to " << targetPlayer->getFirstName();
+			logMan->logAction(LogType::PLAYERLARGETIP, logEntry.toString());
+		}
+
+		if (ghost->hasGodMode()) {
+			StringBuffer logEntry;
+			logEntry << player->getFirstName() << " bank tipped " << amount << " credits to " << targetPlayer->getFirstName();
+			logMan->logAction(LogType::STAFFTIP, logEntry.toString());
+		}
 
 		player->subtractBankCredits(amount + surcharge);
 		targetPlayer->addBankCredits(amount, true);

@@ -39,6 +39,7 @@
 #include "server/zone/objects/intangible/TheaterObject.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
+
 Mutex CreatureManagerImplementation::loadMutex;
 
 void CreatureManagerImplementation::setCreatureTemplateManager() {
@@ -552,15 +553,24 @@ int CreatureManagerImplementation::notifyDestruction(TangibleObject* destructor,
 							for (int i = 0; i < group->getGroupSize(); i++) {
 								ManagedReference<CreatureObject*> groupMember = group->getGroupMember(i);
 
-								if (groupMember->isPlayerCreature()) {
+								if (groupMember->isPlayerCreature() &&
+										groupMember->getWorldPosition().distanceTo(destructedObject->getWorldPosition()) < ZoneServer::CLOSEOBJECTRANGE) {
 									Locker locker(groupMember, destructedObject);
 									groupMember->notifyObservers(ObserverEventType::KILLEDCREATURE, destructedObject);
+
+									PlayerObject* groupGhost = groupMember->getPlayerObject();
+									if (groupGhost != nullptr)
+										groupGhost->updatePveKills();
 								}
 							}
 						}
 					} else {
 						Locker locker(player, destructedObject);
 						player->notifyObservers(ObserverEventType::KILLEDCREATURE, destructedObject);
+
+						PlayerObject* ghost = player->getPlayerObject();
+						if (ghost != nullptr)
+							ghost->updatePveKills();
 					}
 				}
 
@@ -592,6 +602,19 @@ int CreatureManagerImplementation::notifyDestruction(TangibleObject* destructor,
 				TransactionLog trx(TrxCode::NPCLOOT, destructedObject, credits, true);
 				trx.addState("destructor", destructorObjectID);
 				destructedObject->addCashCredits(credits);
+			}
+
+			//TODO Might need revisit this.
+			if (ConfigManager::instance()->getReckoningCreditsEnabled()) {
+				int dropChance = ConfigManager::instance()->getReckoningCreditsDropRate();
+
+				if (System::random(dropChance) == 0) {
+					destructedObject->clearReckoningCredits();
+					int rcredits = lootManager->calculateReckoningLootCredits(player, destructedObject);
+					TransactionLog trx(TrxCode::NPCLOOT, destructedObject, rcredits, true);
+					trx.addState("destructor", destructorObjectID);
+					destructedObject->addReckoningCredits(rcredits);
+				}
 			}
 
 			Locker locker(creatureInventory);

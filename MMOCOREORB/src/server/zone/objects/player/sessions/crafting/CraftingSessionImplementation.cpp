@@ -374,7 +374,12 @@ bool CraftingSessionImplementation::createPrototypeObject(DraftSchematic* drafts
 
 	// Remove all items, incase there are any
 	while (craftingTool->getContainerObjectsSize() > 0) {
-		craftingTool->getContainerObject(0)->destroyObjectFromWorld(true);
+		SceneObject* obj = craftingTool->getContainerObject(0);
+
+		if (obj != nullptr) {
+			Locker objLocker(obj);
+			obj->destroyObjectFromWorld(true);
+		}
 	}
 
 	prototype = (crafter->getZoneServer()->createObject(

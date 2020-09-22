@@ -254,6 +254,9 @@ class InstallationObject extends StructureObject {
 
 	@read
 	public native float getHitChance();
+
+	public native string getCurrentSpawnName();
+
 }
 
 

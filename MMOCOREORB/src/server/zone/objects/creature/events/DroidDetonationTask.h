@@ -208,7 +208,7 @@ public:
 					PlayerObject* ghost = player->getPlayerObject();
 
 					if (ghost != nullptr) {
-						ghost->updateLastCombatActionTimestamp(shouldGcwCrackdownTef, shouldGcwTef, shouldBhTef);
+						ghost->updateLastPvpCombatActionTimestamp(shouldGcwCrackdownTef, shouldGcwTef, shouldBhTef);
 					}
 				}
 

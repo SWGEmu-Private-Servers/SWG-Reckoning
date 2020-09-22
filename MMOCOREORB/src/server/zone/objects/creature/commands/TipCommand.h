@@ -10,6 +10,9 @@
 #include "server/zone/objects/player/sui/callbacks/TipCommandSuiCallback.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
+#include "server/zone/managers/log/ReckoningLogManager.h"
+#include "server/zone/managers/log/LogType.h"
+
 class TipCommand: public QueueCommand {
 private:
 
@@ -36,10 +39,34 @@ private:
 
 		// We have a target, who is on-line, in range, with sufficient funds.
 		// Lock target player to prevent simultaneous tips to not register correctly.
+		ManagedReference<ReckoningLogManager*> logMan = player->getZoneServer()->getReckoningLogManager();
+		if (logMan == nullptr)
+			return GENERALERROR;
+
+		PlayerObject* ghost = player->getPlayerObject();
+		if (ghost == nullptr)
+			return GENERALERROR;
 
 		Locker clocker(targetPlayer, player);
 		{
 			TransactionLog trx(player, targetPlayer, TrxCode::PLAYERTIP, amount, true);
+
+			StringBuffer logEntry;
+			logEntry << player->getFirstName() << " cash tipped " << amount << " credits to " << targetPlayer->getFirstName();
+			logMan->logAction(LogType::PLAYERTIP, logEntry.toString());
+
+			if (amount >= 5000000) {
+				StringBuffer logEntry;
+				logEntry << player->getFirstName() << " cash tipped " << amount << " credits to " << targetPlayer->getFirstName();
+				logMan->logAction(LogType::PLAYERLARGETIP, logEntry.toString());
+			}
+
+			if (ghost->hasGodMode()) {
+				StringBuffer logEntry;
+				logEntry << player->getFirstName() << " cash tipped " << amount << " credits to " << targetPlayer->getFirstName();
+				logMan->logAction(LogType::STAFFTIP, logEntry.toString());
+			}
+
 			player->subtractCashCredits(amount);
 			targetPlayer->addCashCredits(amount, true);
 		}

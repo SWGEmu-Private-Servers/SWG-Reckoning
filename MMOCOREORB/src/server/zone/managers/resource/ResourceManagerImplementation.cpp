@@ -84,7 +84,12 @@ bool ResourceManagerImplementation::loadConfigData() {
 	Lua* lua = new Lua();
 	lua->init();
 
-	if (!lua->runFile("scripts/managers/resource_manager.lua")) {
+	bool res = lua->runFile("custom_scripts/managers/resource_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/resource_manager.lua");
+
+	if (!res) {
 		delete lua;
 		return false;
 	}
@@ -435,6 +440,12 @@ String ResourceManagerImplementation::dumpResources() {
 	Locker locker(_this.getReferenceUnsafeStaticCast());
 
 	return resourceSpawner->dumpResources();
+}
+
+String ResourceManagerImplementation::dumpResourcesToGHScript() {
+	Locker locker(_this.getReferenceUnsafeStaticCast());
+
+	return resourceSpawner->dumpResourcesToGHScript();
 }
 
 String ResourceManagerImplementation::despawnResource(String& resourceName) {

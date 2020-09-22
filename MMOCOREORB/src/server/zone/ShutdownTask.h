@@ -24,21 +24,21 @@ public:
 	void run() {
 		--minutesRemaining;
 
-		String str = "Server will shutdown in " + String::valueOf(minutesRemaining) + " minutes";
+		String str = "The server will shutdown in " + String::valueOf(minutesRemaining) + " minutes. Please move your character to a safe place.";
 
 		if (minutesRemaining <= 0)
-			str = "SHUTTING DOWN NOW!";
+			str = "THE SERVER IS SHUTTING DOWN NOW!";
 
 		Logger::console.info(str, true);
 
-		zoneServer->getChatManager()->broadcastGalaxy(nullptr, str);
+		if (minutesRemaining % 10 == 0 || minutesRemaining <= 5)
+			zoneServer->getChatManager()->broadcastGalaxy(nullptr, str);
 
 		if (minutesRemaining <= 0) {
 			ServerCore::getInstance()->signalShutdown();
 		} else {
 			schedule(60 * 1000);
 		}
-
 	}
 };
 

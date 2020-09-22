@@ -69,7 +69,7 @@ class CityRegion extends ManagedObject implements Logger {
 	protected CitizenList bannedList;
 
 	@dereferenced
-	protected transient SortedVector<unsigned long> completeStructureList;
+	protected SortedVector<unsigned long> completeStructureList;
 
 	@dereferenced
 	protected transient Mutex structureListMutex;
@@ -123,6 +123,9 @@ class CityRegion extends ManagedObject implements Logger {
 	protected SortedVector<SceneObject> cityMissionTerminals;
 
 	@dereferenced
+	protected SortedVector<SceneObject> cityBazaarTerminals;
+
+	@dereferenced
 	protected Vector<SceneObject> cityDecorations;
 
 	@dereferenced
@@ -130,6 +133,8 @@ class CityRegion extends ManagedObject implements Logger {
 
 	@dereferenced
 	protected transient VectorMap<unsigned long, TangibleObject> bazaars;
+
+	protected unsigned int factionAlignment;
 
 	public static final byte RANK_CLIENT = 0;
 	public static final byte RANK_OUTPOST = 1;
@@ -561,6 +566,11 @@ class CityRegion extends ManagedObject implements Logger {
 	}
 
 	@dirty
+	public int getBazaarTerminalCount() {
+		return cityBazaarTerminals.size();
+	}
+
+	@dirty
 	public int getDecorationCount() {
 		return cityDecorations.size();
 	}
@@ -573,6 +583,11 @@ class CityRegion extends ManagedObject implements Logger {
 	@preLocked
 	public void addMissionTerminal(SceneObject mt) {
 		cityMissionTerminals.put(mt);
+	}
+
+	@preLocked
+	public void addBazaarTerminal(SceneObject bt) {
+		cityBazaarTerminals.put(bt);
 	}
 
 	public void addDecoration(SceneObject deco) {
@@ -591,6 +606,11 @@ class CityRegion extends ManagedObject implements Logger {
 	@preLocked
 	public void removeMissionTerminal(SceneObject mt) {
 		cityMissionTerminals.drop(mt);
+	}
+
+	@preLocked
+	public void removeBazaarTerminal(SceneObject bt) {
+		cityBazaarTerminals.drop(bt);
 	}
 
 	public void removeDecoration(SceneObject deco) {
@@ -810,6 +830,12 @@ class CityRegion extends ManagedObject implements Logger {
 
 	@local
 	@dirty
+	public SceneObject getCityBazaarTerminal(int indx) {
+		return cityBazaarTerminals.get(indx);
+	}
+
+	@local
+	@dirty
 	public SceneObject getCitySkillTrainer(int indx) {
 		return citySkillTrainers.get(indx);
 	}
@@ -856,4 +882,13 @@ class CityRegion extends ManagedObject implements Logger {
 
 	@read
 	public native unsigned long getObjectID();
+
+	@preLocked
+	public void setFactionAlignment(unsigned int val) {
+		factionAlignment = val;
+	}
+	@read
+	public unsigned int getFactionAlignment() {
+		return factionAlignment;
+	}
 }

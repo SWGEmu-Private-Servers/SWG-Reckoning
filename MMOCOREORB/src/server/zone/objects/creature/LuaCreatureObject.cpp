@@ -128,7 +128,7 @@ Luna<LuaCreatureObject>::RegType LuaCreatureObject::Register[] = {
 		{ "isInCombat", &LuaCreatureObject::isInCombat },
 		{ "healDamage", &LuaCreatureObject::healDamage },
 		{ "getGroupID", &LuaCreatureObject::getGroupID },
-		{ "enhanceCharacter", &LuaCreatureObject::enhanceCharacter },
+		{ "builderEnhanceCharacter", &LuaCreatureObject::builderEnhanceCharacter },
 		{ "setWounds", &LuaCreatureObject::setWounds },
 		{ "setShockWounds", &LuaCreatureObject::setShockWounds },
 		{ "getForceSensitiveSkillCount", &LuaCreatureObject::getForceSensitiveSkillCount },
@@ -143,6 +143,9 @@ Luna<LuaCreatureObject>::RegType LuaCreatureObject::Register[] = {
 		{ "getGender", &LuaCreatureObject::getGender },
 		{ "isRidingMount", &LuaCreatureObject::isRidingMount },
 		{ "dismount", &LuaCreatureObject::dismount },
+		{ "getReckoningCredits", &LuaCreatureObject::getReckoningCredits},
+		{ "subtractReckoningCredits", &LuaCreatureObject::subtractReckoningCredits},
+		{ "addReckoningCredits", &LuaCreatureObject::addReckoningCredits},
 		{ 0, 0 }
 };
 
@@ -1011,9 +1014,9 @@ int LuaCreatureObject::getGroupID(lua_State* L) {
 	return 1;
 }
 
-int LuaCreatureObject::enhanceCharacter(lua_State* L) {
+int LuaCreatureObject::builderEnhanceCharacter(lua_State* L) {
 	PlayerManager* playerManager = realObject->getZoneServer()->getPlayerManager();
-	playerManager->enhanceCharacter(realObject);
+	playerManager->builderEnhanceCharacter(realObject);
 
 	return 0;
 }
@@ -1126,5 +1129,27 @@ int LuaCreatureObject::isRidingMount(lua_State* L) {
 
 int LuaCreatureObject::dismount(lua_State* L) {
 	realObject->dismount();
+	return 0;
+}
+
+int LuaCreatureObject::getReckoningCredits(lua_State* L) {
+	lua_pushinteger(L, realObject->getReckoningCredits());
+
+	return 1;
+}
+
+int LuaCreatureObject::subtractReckoningCredits(lua_State* L) {
+	Locker locker(realObject);
+
+	realObject->subtractReckoningCredits(lua_tointeger(L, -1));
+
+	return 0;
+}
+
+int LuaCreatureObject::addReckoningCredits(lua_State* L) {
+	Locker locker(realObject);
+
+	realObject->addReckoningCredits(lua_tointeger(L, -1));
+
 	return 0;
 }

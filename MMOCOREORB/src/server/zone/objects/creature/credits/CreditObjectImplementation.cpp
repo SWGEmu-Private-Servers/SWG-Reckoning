@@ -6,6 +6,19 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/managers/credit/CreditManager.h"
 
+WeakReference<CreatureObject*> CreditObjectImplementation::getOwner() {
+	return owner;
+}
+
+void CreditObjectImplementation::setOwner(CreatureObject* obj) {
+	ownerObjectID = obj->getObjectID();
+	owner = obj;
+}
+
+uint64 CreditObjectImplementation::getOwnerObjectID() const {
+	return ownerObjectID;
+}
+
 void CreditObjectImplementation::setCashCredits(int credits, bool notifyClient) {
 	if (cashCredits == credits)
 		return;
@@ -27,19 +40,6 @@ void CreditObjectImplementation::setCashCredits(int credits, bool notifyClient) 
 	}
 }
 
-WeakReference<CreatureObject*> CreditObjectImplementation::getOwner() {
-	return owner;
-}
-
-void CreditObjectImplementation::setOwner(CreatureObject* obj) {
-	ownerObjectID = obj->getObjectID();
-	owner = obj;
-}
-
-uint64 CreditObjectImplementation::getOwnerObjectID() const {
-	return ownerObjectID;
-}
-
 void CreditObjectImplementation::setBankCredits(int credits, bool notifyClient) {
 	if (bankCredits == credits)
 		return;
@@ -59,6 +59,15 @@ void CreditObjectImplementation::setBankCredits(int credits, bool notifyClient) 
 		msg->close();
 		creo->sendMessage(msg);
 	}
+}
+
+void CreditObjectImplementation::setReckoningCredits(int credits) {
+	if (reckoningCredits == credits)
+		return;
+
+	E3_ASSERT(credits >= 0);
+
+	reckoningCredits = credits;
 }
 
 void CreditObjectImplementation::transferCredits(int cash, int bank, bool notifyClient) {
@@ -122,6 +131,20 @@ void CreditObjectImplementation::subtractCashCredits(int credits, bool notifyCli
 	}
 
 	setCashCredits(cashCredits - credits, notifyClient);
+}
+
+void CreditObjectImplementation::subtractReckoningCredits(int credits) {
+	if (credits < 0) {
+		error() << "WARNING: Negative subtractReckoningCredits(credits=" << credits << "), current: " << *this;
+		return;
+	}
+
+	if (credits > reckoningCredits) {
+		clearReckoningCredits();
+		return;
+	}
+
+	setReckoningCredits(reckoningCredits - credits);
 }
 
 bool CreditObjectImplementation::subtractCredits(int credits, bool notifyClient, bool bankFirst) {
@@ -207,6 +230,16 @@ void CreditObjectImplementation::addCashCredits(int credits, bool notifyClient) 
 	setCashCredits(cashCredits + credits, notifyClient);
 }
 
+void CreditObjectImplementation::addReckoningCredits(int credits) {
+	if (credits < 0) {
+		error() << "WARNING: Negative addReckoningCredits(credits=" << credits << "), current: " << *this;
+		return;
+	}
+
+	setReckoningCredits(credits);
+}
+
+
 void CreditObjectImplementation::notifyLoadFromDatabase() {
 	ManagedObjectImplementation::notifyLoadFromDatabase();
 
@@ -218,6 +251,11 @@ void CreditObjectImplementation::notifyLoadFromDatabase() {
 	if (bankCredits < 0) {
 		error() << "Fixing negative bankCredits on load, current: " << *this;
 		bankCredits = 0;
+	}
+
+	if (reckoningCredits < 0) {
+		error() << "Fixing negative reckoningCredits on load, current: " << *this;
+		reckoningCredits = 0;
 	}
 }
 
@@ -246,6 +284,7 @@ String CreditObjectImplementation::toStringData() const {
 	jsonData["ownerObjectID"] = getOwnerObjectID();
 	jsonData["bankCredits"] = bankCredits;
 	jsonData["cashCredits"] = cashCredits;
+	jsonData["reckoningCredits"] = reckoningCredits;
 	jsonData["objectID"] = _this.getReferenceUnsafeStaticCast()->_getObjectID();
 	return jsonData.dump();
 }

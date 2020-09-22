@@ -257,8 +257,11 @@ class BuildingObject extends StructureObject {
 	public native int notifyObjectInsertedToChild(SceneObject object, SceneObject child, SceneObject oldParent);
 	public native int notifyObjectRemovedFromChild(SceneObject object, SceneObject child);
 
-	@dirty
+	@read
 	public native int getCurrentNumberOfPlayerItems();
+
+	@read
+	public native int getCurrentNumberOfPlayerVendors();
 
 	/**
 	 * Loops through all the cells, destroying items from the database that aren't contained in the child objects vector.
@@ -343,11 +346,14 @@ class BuildingObject extends StructureObject {
 
 	@dirty
 	public string getRedeedMessage() {
-		if(getCurrentNumberOfPlayerItems() > 0)
+		if (getCurrentNumberOfPlayerItems() > 0)
 			return "clear_building_for_delete";
 
 		return "";
 	}
+
+	@read
+	public native string getPackupMessage();
 
 	@read
 	public boolean hasAccessFee() {

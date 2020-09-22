@@ -277,6 +277,8 @@ void ObjectManager::registerObjectTypes() {
 	objectFactory.registerObject<PetControlDevice>(SceneObjectType::PETCONTROLDEVICE);
 	objectFactory.registerObject<PetControlDevice>(SceneObjectType::DROIDCONTROLDEVICE);
 	objectFactory.registerObject<ShipControlDevice>(SceneObjectType::SHIPCONTROLDEVICE);
+	objectFactory.registerObject<StructureControlDevice>(SceneObjectType::STRUCTURECONTROLDEVICE);
+	objectFactory.registerObject<VendorControlDevice>(SceneObjectType::VENDORCONTROLDEVICE);
 	objectFactory.registerObject<VehicleObject>(SceneObjectType::VEHICLE);
 	objectFactory.registerObject<VehicleObject>(SceneObjectType::HOVERVEHICLE);
 	objectFactory.registerObject<DroidObject>(SceneObjectType::DROIDCREATURE);
@@ -337,6 +339,9 @@ void ObjectManager::registerObjectTypes() {
 	objectFactory.registerObject<FighterShipObject>(SceneObjectType::SHIPFIGHTER);
 	objectFactory.registerObject<SpaceStationObject>(SceneObjectType::SHIPSTATION);
 	objectFactory.registerObject<TangibleObject>(SceneObjectType::CRYSTAL);
+
+	objectFactory.registerObject<ETerminal>(SceneObjectType::ETERMINAL);
+	objectFactory.registerObject<FactionalArea>(SceneObjectType::FACTIONALAREA);
 }
 
 void ObjectManager::updateObjectVersion() {
@@ -998,6 +1003,9 @@ void ObjectManager::onCommitData() {
 			StringBuffer deleteQuery;
 			deleteQuery << "DELETE FROM characters_dirty WHERE ";
 
+			StringBuffer statsquery;
+			statsquery << "REPLACE INTO character_stats (character_oid, galaxy_id, firstname) VALUES";
+
 			bool first = true;
 
 			int count = 0;
@@ -1006,6 +1014,7 @@ void ObjectManager::onCommitData() {
 				if (!first) {
 					query << ",";
 					deleteQuery << " OR ";
+					statsquery << ",";
 				}
 
 				query << "(" << charactersSaved->getUnsignedLong(0) << ", " << charactersSaved->getInt(1) << ", "
@@ -1015,6 +1024,9 @@ void ObjectManager::onCommitData() {
 
 				deleteQuery << "character_oid = " << charactersSaved->getUnsignedLong(0) << " AND galaxy_id = " << galaxyId;
 
+				statsquery << "(" << charactersSaved->getUnsignedLong(0) << ", " << charactersSaved->getInt(2) << ", "
+						<< "\'" << String(charactersSaved->getString(3)).escapeString() << "')";
+
 				first = false;
 				++count;
 			}
@@ -1022,6 +1034,9 @@ void ObjectManager::onCommitData() {
 			if (count > 0) {
 				ServerDatabase::instance()->executeStatement(query.toString());
 				ServerDatabase::instance()->executeStatement(deleteQuery.toString());
+
+				if (ConfigManager::instance()->getCharacterStatsEnabled())
+					ServerDatabase::instance()->executeStatement(statsquery.toString());
 			}
 		} catch (Exception& e) {
 			System::out << e.getMessage();

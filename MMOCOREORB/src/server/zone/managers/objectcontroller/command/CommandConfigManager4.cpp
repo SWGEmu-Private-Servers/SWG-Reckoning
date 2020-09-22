@@ -181,6 +181,13 @@
 #include "server/zone/objects/creature/commands/InspacerrCommand.h"
 #include "server/zone/objects/creature/commands/RequestSpaceTrainerCommand.h"
 
+#include "server/zone/objects/creature/commands/GuildListCommand.h"
+#include "server/zone/objects/creature/commands/InstallBazaarTerminalCommand.h"
+#include "server/zone/objects/creature/commands/RemovePvpStatesCommand.h"
+#include "server/zone/objects/creature/commands/ShowPlayerStatsCommand.h"
+#include "server/zone/objects/creature/commands/ShowPvpStatsCommand.h"
+#include "server/zone/objects/creature/commands/StructureListCommand.h"
+#include "server/zone/objects/creature/commands/PackupStructureCommand.h"
 
 using namespace server::zone::managers::objectcontroller::command;
 
@@ -325,4 +332,12 @@ void CommandConfigManager::registerCommands4() {
 	commandFactory.registerCommand<InspacereloadCommand>(String("inspacereload").toLowerCase());
 	commandFactory.registerCommand<InspacerrCommand>(String("inspacerr").toLowerCase());
 	commandFactory.registerCommand<RequestSpaceTrainerCommand>(String("requestSpaceTrainer").toLowerCase());
+
+	commandFactory.registerCommand<GuildListCommand>(String("guildList").toLowerCase());
+	commandFactory.registerCommand<InstallBazaarTerminalCommand>(String("installBazaarTerminal").toLowerCase());
+	commandFactory.registerCommand<RemovePvpStatesCommand>(String("removePvpStates").toLowerCase());
+	commandFactory.registerCommand<ShowPlayerStatsCommand>(String("showPlayerStats").toLowerCase());
+	commandFactory.registerCommand<ShowPvpStatsCommand>(String("showPvpStats").toLowerCase());
+	commandFactory.registerCommand<StructureListCommand>(String("structureList").toLowerCase());
+	commandFactory.registerCommand<PackupStructureCommand>(String("packupstructure").toLowerCase());
 }

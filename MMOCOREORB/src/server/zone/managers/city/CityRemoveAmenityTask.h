@@ -24,6 +24,8 @@ public:
 
 		if (amenity->isMissionTerminal())
 			city->removeMissionTerminal(amenity);
+		else if (amenity->isBazaarTerminal())
+				city->removeBazaarTerminal(amenity);
 		else
 			city->removeSkillTrainers(amenity);
 

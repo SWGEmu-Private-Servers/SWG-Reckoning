@@ -7,6 +7,7 @@ package server.zone.objects.tangible;
 import server.zone.objects.scene.SceneObject;
 import system.util.SortedVector;
 import engine.log.Logger;
+import server.zone.packets.object.ObjectMenuResponse;
 include server.zone.packets.scene.AttributeListMessage;
 import server.zone.objects.creature.CreatureObject;
 include server.zone.objects.area.ActiveArea;
@@ -23,6 +24,7 @@ import server.zone.objects.tangible.threat.ThreatMap;
 include server.zone.objects.scene.variables.AutoDeltaSet;
 include server.zone.objects.scene.variables.StringId;
 include system.thread.atomic.AtomicInteger;
+include server.zone.objects.intangible.ControlDevice;
 
 @json
 class TangibleObject extends SceneObject {
@@ -83,6 +85,9 @@ class TangibleObject extends SceneObject {
 
 	protected SceneObject antiDecayKitObject;
 
+	@weakReference
+	protected ControlDevice controlDevice;
+
 	/**
 	 * TangibleObject constructor, used to initialized the object
 	 * @pre { templateData is a valid SharedTangibleObjectTemplate LuaObject that contains the necessary values to initialize CreatureObject }
@@ -127,6 +132,8 @@ class TangibleObject extends SceneObject {
 		threatMap = null;
 		junkDealerNeeded = 0;
 		junkValue = 0;
+
+		controlDevice = null;
 	}
 
 	/**
@@ -194,6 +201,26 @@ class TangibleObject extends SceneObject {
 	 * @post { this locked }
 	 */
 	public native void notifyLoadFromDatabase();
+
+	/**
+	 * Fills the radial options, needs to be overriden
+	 * @pre { this object is locked }
+	 * @post { this object is locked, menuResponse is complete}
+	 * @param menuResponse ObjectMenuResponse that will be sent to the client
+	 */
+	@local
+	@dirty
+	public native void fillObjectMenuResponse(ObjectMenuResponse menuResponse, CreatureObject player);
+
+	/**
+	 * Handles the radial selection sent by the client, must be overriden by inherited objects
+	 * @pre { this object is locked, player is locked }
+	 * @post { this object is locked, player is locked }
+	 * @param player CreatureObject that selected the option
+	 * @param selectedID selected menu id
+	 * @returns 0 if successfull
+	 */
+	public native int handleObjectMenuSelect(CreatureObject player, byte selectedID);
 
 	/**
 	 * Updates the object name of the object
@@ -881,6 +908,12 @@ class TangibleObject extends SceneObject {
 	public native boolean isCityFountain();
 
 	@read
+	public native boolean isCityImperialSign();
+
+	@read
+	public native boolean isCityRebelSign();
+
+	@read
 	public boolean isInvisible() {
 		return invisible;
 	}
@@ -917,5 +950,16 @@ class TangibleObject extends SceneObject {
 
 	@dirty
 	public native boolean isInNavMesh();
+
+	@preLocked
+	public void setControlDevice(ControlDevice device) {
+		controlDevice = device;
+	}
+
+	@weakReference
+	@read
+	public ControlDevice getControlDevice() {
+		return controlDevice;
+	}
 }
 

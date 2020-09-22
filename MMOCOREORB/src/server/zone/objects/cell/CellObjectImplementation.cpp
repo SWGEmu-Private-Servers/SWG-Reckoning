@@ -186,7 +186,7 @@ int CellObjectImplementation::getCurrentNumberOfPlayerItems() {
 		for (int j = 0; j < getContainerObjectsSize(); ++j) {
 			ManagedReference<SceneObject*> containerObject = getContainerObject(j);
 
-			if (!strongParent->containsChildObject(containerObject) && !containerObject->isCreatureObject() && !containerObject->isVendor()) {
+			if (!strongParent->containsChildObject(containerObject) && !containerObject->isCreatureObject()) {
 
 				if (containerObject->isContainerObject())
 					count += containerObject->getCountableObjectsRecursive();
@@ -194,6 +194,23 @@ int CellObjectImplementation::getCurrentNumberOfPlayerItems() {
 				++count;
 			}
 		}
+	}
+
+	return count;
+}
+
+int CellObjectImplementation::getCurrentNumberOfPlayerVendors() {
+	int count = 0;
+
+	ManagedReference<SceneObject*> strongParent = getParent().get();
+
+	if (strongParent != nullptr) {
+		for (int j = 0; j < getContainerObjectsSize(); ++j) {
+			ManagedReference<SceneObject*> containerObject = getContainerObject(j);
+
+			if (!strongParent->containsChildObject(containerObject) && containerObject->isVendor())
+				++count;
+			}
 	}
 
 	return count;

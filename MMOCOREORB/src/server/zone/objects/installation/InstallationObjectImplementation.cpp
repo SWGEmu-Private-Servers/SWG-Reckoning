@@ -735,12 +735,19 @@ bool InstallationObjectImplementation::isAttackableBy(CreatureObject* object) {
 	} else if (object->isPlayerCreature()) {
 		if (thisFaction != 0) {
 			Reference<PlayerObject*> ghost = object->getPlayerObject();
-			if (ghost != nullptr && ghost->hasCrackdownTefTowards(thisFaction)) {
-				return true;
+
+			if (ghost != nullptr) {
+				if (ghost->hasSpawnProtection())
+					return false;
+
+				if (ghost->hasCrackdownTefTowards(thisFaction))
+					return true;
 			}
+
 			if (otherFaction != 0 && otherFaction == thisFaction) {
 				return false;
 			}
+
 			if (object->getFactionStatus() == 0) {
 				return false;
 			}
@@ -818,4 +825,11 @@ float InstallationObjectImplementation::getHitChance() const {
 		return 0;
 
 	return inso->getChanceHit();
+}
+
+String InstallationObjectImplementation::getCurrentSpawnName() {
+	if	(currentSpawn != nullptr)
+		return currentSpawn->getType() + " - " + currentSpawn->getName();
+	else
+		return "";
 }

@@ -32,23 +32,13 @@ public:
 
 		Locker clocker(targetCreature, creature);
 
-		const SkillList* skillList = targetCreature->getSkillList();
-
-		for (int i = 0; i < skillList->size(); ++i) {
-			Skill* skill = skillList->get(i);
-			if (skill->getSkillName().indexOf("force_") != -1){
-				SkillManager::instance()->surrenderSkill(skill->getSkillName(), targetCreature, true);
-			}
-		}
-
-		// Jedi State.s
-
 		ManagedReference<PlayerObject*> targetGhost = targetCreature->getPlayerObject();
 
 		if (targetGhost == nullptr)
 			return GENERALERROR;
 
-		targetGhost->setJediState(0);
+		//Reset Jedi
+		targetGhost->resetJedi();
 
 		return SUCCESS;
 	}

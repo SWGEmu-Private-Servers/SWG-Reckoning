@@ -20,9 +20,6 @@ class ObjectController extends ManagedService implements Logger {
 	private transient CommandConfigManager configManager;
 	private transient CommandList queueCommands;
 
-	@dereferenced
-	private transient Logger adminLog;
-
 	public ObjectController(ZoneProcessServer srv) {
 		server = srv;
 

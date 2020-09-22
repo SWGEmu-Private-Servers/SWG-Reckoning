@@ -528,7 +528,10 @@ int CommandConfigManager::runSlashCommandsFile(lua_State* L) {
 
 	filename = getStringParameter(L);
 
-	bool res = runFile("scripts/commands/" + filename, L);
+	bool res = runFile("custom_scripts/commands/" + filename, L);
+
+	if (!res)
+		res = runFile("scripts/commands/" + filename, L);
 
 	if (!res)
 		ERROR_CODE = GENERAL_ERROR;
@@ -622,18 +625,22 @@ void CommandConfigManager::parseVariableData(String varName, LuaObject &command,
 			combatCommand->setForceCostMultiplier(Lua::getFloatParameter(L));
 		else if (varName == "forceCost")
 			combatCommand->setForceCost(Lua::getFloatParameter(L));
-		else if (varName == "frsLightForceCostModifier")
+		else if (varName == "frsLightCostMultiplier")
 			combatCommand->setFrsLightForceCostModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsDarkForceCostModifier")
+		else if (varName == "frsDarkCostMultiplier")
 			combatCommand->setFrsDarkForceCostModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsLightMinDamageModifier")
+		else if (varName == "frsLightMinDmgMultiplier")
 			combatCommand->setFrsLightMinDamageModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsLightMaxDamageModifier")
+		else if (varName == "frsLightMaxDmgMultiplier")
 			combatCommand->setFrsLightMaxDamageModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsDarkMinDamageModifier")
+		else if (varName == "frsDarkMinDmgMultiplier")
 			combatCommand->setFrsDarkMinDamageModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsDarkMaxDamageModifier")
+		else if (varName == "frsDarkMaxDmgMultiplier")
 			combatCommand->setFrsDarkMaxDamageModifier(Lua::getFloatParameter(L));
+		else if (varName == "frsLightSpeedMultiplier")
+			combatCommand->setFrsLightSpeedModifier(Lua::getFloatParameter(L));
+		else if (varName == "frsDarkSpeedMultiplier")
+			combatCommand->setFrsDarkSpeedModifier(Lua::getFloatParameter(L));
 		else if (varName == "visMod")
 			combatCommand->setVisMod(Lua::getIntParameter(L));
 		else if (varName == "coneRange")
@@ -674,7 +681,6 @@ void CommandConfigManager::parseVariableData(String varName, LuaObject &command,
 				combatCommand->addStateEffect(StateEffect(state));
 				state.pop();
 			}
-
 			states.pop();
 		} else if (varName == "dotEffects") {
 			LuaObject dots(L);
@@ -686,7 +692,6 @@ void CommandConfigManager::parseVariableData(String varName, LuaObject &command,
 				//System::out << "count " << combatCommand->getDotEffects()->size()<< endl;
 				dot.pop();
 			}
-
 			dots.pop();
 		} else if (combatCommand->isSquadLeaderCommand()) {
 			SquadLeaderCommand* slCommand = cast<SquadLeaderCommand*>(combatCommand);
@@ -716,17 +721,17 @@ void CommandConfigManager::parseVariableData(String varName, LuaObject &command,
 			jediCommand->setClientEffect(Lua::getStringParameter(L));
 		else if (varName == "speedMod")
 			jediCommand->setSpeedMod(Lua::getFloatParameter(L));
-		else if (varName == "frsLightForceCostModifier")
+		else if (varName == "frsLightCostMultiplier")
 			jediCommand->setFrsLightForceCostModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsDarkForceCostModifier")
+		else if (varName == "frsDarkCostMultiplier")
 			jediCommand->setFrsDarkForceCostModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsDarkExtraForceCostModifier")
-			jediCommand->setFrsDarkExtraForceCostModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsLightExtraForceCostModifier")
+		else if (varName == "frsLightAdditionalCostMultiplier")
 			jediCommand->setFrsLightExtraForceCostModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsLightBuffModifier")
+		else if (varName == "frsDarkAdditionalCostMultiplier")
+			jediCommand->setFrsDarkExtraForceCostModifier(Lua::getFloatParameter(L));
+		else if (varName == "frsLightEffectMultiplier")
 			jediCommand->setFrsLightBuffModifier(Lua::getFloatParameter(L));
-		else if (varName == "frsDarkBuffModifier")
+		else if (varName == "frsDarkEffectMultiplier")
 			jediCommand->setFrsDarkBuffModifier(Lua::getFloatParameter(L));
 		else if (varName == "frsLightForcePowerModifier")
 			jediCommand->setFrsLightForcePowerModifier(Lua::getFloatParameter(L));

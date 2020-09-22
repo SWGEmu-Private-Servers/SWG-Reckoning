@@ -1,0 +1,41 @@
+package server.zone.objects.player.sui.eterminalbox;
+
+import engine.service.proto.BaseMessage;
+
+import server.zone.objects.creature.CreatureObject;
+import server.zone.objects.player.sui.listbox.SuiListBox;
+
+include templates.tangible.ETerminalMenuNode;
+include server.zone.objects.player.sui.SuiWindowType;
+
+class SuiETerminalBox extends SuiListBox {
+	protected transient ETerminalMenuNode rootNode;
+	protected transient ETerminalMenuNode currentNode;
+	
+	public SuiETerminalBox(CreatureObject player, ETerminalMenuNode root) {
+		super(player, SuiWindowType.E_TERMINAL_LIST, SuiListBox.HANDLETHREEBUTTON);
+		
+		Logger.setLoggingName("SuiETerminalBox");
+		
+		setPromptTitle("Enhancement Terminal");
+		
+		setPromptText("You can heal, get basic buffs, or remove buffs.");
+		
+		rootNode = root;
+		
+		currentNode = root;
+	}
+
+	@local
+	public native BaseMessage generateMessage();
+	
+	@local
+	public native ETerminalMenuNode getCurrentNode();
+	
+	@local
+	public native void setCurrentNode(ETerminalMenuNode node);
+	
+	public boolean isETerminalBox() {
+		return true;
+	}
+}

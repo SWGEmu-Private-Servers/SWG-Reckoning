@@ -90,6 +90,10 @@ void LoginPacketHandler::handleDeleteCharacterMessage(LoginClient* client, Messa
 	deleteStatement << "DELETE FROM characters WHERE character_oid = " << charId;
 	deleteStatement << " AND account_id = " << accountId << " AND galaxy_id = " << ServerId << ";";
 
+    StringBuffer deleteStatsStatement;
+    deleteStatsStatement << "DELETE FROM character_stats WHERE character_oid = " << charId;
+    deleteStatsStatement << " AND galaxy_id = " << ServerId << ";";
+
 	int dbDelete = 0;
 
 	try {
@@ -121,13 +125,19 @@ void LoginPacketHandler::handleDeleteCharacterMessage(LoginClient* client, Messa
 	if (!dbDelete) {
 		try {
 			UniqueReference<ResultSet*> deleteResults(ServerDatabase::instance()->executeQuery(deleteStatement));
-
 			if (deleteResults == nullptr || deleteResults.get()->getRowsAffected() == 0) {
 				error() << "Unable to delete character from character table. " << endl
 					<< "QUERY: " << deleteStatement;
 
 				dbDelete = 1;
 			}
+
+			UniqueReference<ResultSet*> deleteStatsResults(ServerDatabase::instance()->executeQuery(deleteStatsStatement));
+			if (deleteStatsResults == nullptr || deleteStatsResults.get()->getRowsAffected() == 0) {
+				error() << "Unable to delete character stats from character stat table. " << endl
+					<< "QUERY: " << deleteStatsStatement;
+			}
+
 		} catch (const Exception& e) {
 			error() << e.getMessage();
 			dbDelete = 1;
@@ -137,5 +147,3 @@ void LoginPacketHandler::handleDeleteCharacterMessage(LoginClient* client, Messa
 	Message* msg = new DeleteCharacterReplyMessage(dbDelete);
 	client->sendMessage(msg);
 }
-
-

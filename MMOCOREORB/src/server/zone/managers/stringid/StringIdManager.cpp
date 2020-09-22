@@ -12,6 +12,7 @@
 #include "templates/manager/DataArchiveStore.h"
 #include "tre3/TreeArchive.h"
 
+
 void StringIdManager::populateDatabase() {
 	int count = 0;
 

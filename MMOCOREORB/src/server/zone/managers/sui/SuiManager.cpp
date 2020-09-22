@@ -29,6 +29,9 @@
 #include "server/zone/managers/loot/LootManager.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
+#include "server/zone/objects/player/sui/eterminalbox/SuiETerminalBox.h"
+#include "server/zone/objects/tangible/terminal/eterminal/ETerminal.h"
+
 SuiManager::SuiManager() : Logger("SuiManager") {
 	server = nullptr;
 	setGlobalLogging(true);
@@ -120,6 +123,9 @@ void SuiManager::handleSuiEventNotification(uint32 boxID, CreatureObject* player
 		break;
 	case SuiWindowType::CHARACTER_BUILDER_LIST:
 		handleCharacterBuilderSelectItem(player, suiBox, eventIndex, args);
+		break;
+	case SuiWindowType::E_TERMINAL_LIST:
+		handleETerminalSelectItem(player, suiBox, eventIndex, args);
 		break;
 	case SuiWindowType::OBJECT_NAME:
 		handleSetObjectName(player, suiBox, eventIndex, args);
@@ -278,7 +284,12 @@ void SuiManager::handleFishingAction(CreatureObject* player, SuiBox* suiBox, uin
 }
 
 void SuiManager::handleCharacterBuilderSelectItem(CreatureObject* player, SuiBox* suiBox, uint32 cancel, Vector<UnicodeString>* args) {
-	if (!ConfigManager::instance()->getCharacterBuilderEnabled())
+	PlayerObject* ghost = player->getPlayerObject();
+
+	if (ghost == nullptr)
+		return;
+
+	if (!ConfigManager::instance()->getCharacterBuilderEnabled() && !ghost->isPrivileged())
 		return;
 
 	ZoneServer* zserv = player->getZoneServer();
@@ -302,8 +313,6 @@ void SuiManager::handleCharacterBuilderSelectItem(CreatureObject* player, SuiBox
 	ManagedReference<SuiCharacterBuilderBox*> cbSui = cast<SuiCharacterBuilderBox*>( suiBox);
 
 	const CharacterBuilderMenuNode* currentNode = cbSui->getCurrentNode();
-
-	PlayerObject* ghost = player->getPlayerObject();
 
 	//If cancel was pressed then we kill the box/menu.
 	if (cancel != 0 || ghost == nullptr)
@@ -349,6 +358,8 @@ void SuiManager::handleCharacterBuilderSelectItem(CreatureObject* player, SuiBox
 			return;
 
 		String templatePath = node->getTemplatePath();
+
+		Locker pLocker(player);
 
 		if (templatePath.indexOf(".iff") < 0) { // Non-item selections
 
@@ -488,7 +499,7 @@ void SuiManager::handleCharacterBuilderSelectItem(CreatureObject* player, SuiBox
 				player->sendSystemMessage(stringId);
 
 			} else if (templatePath == "enhance_character") {
-				bluefrog->enhanceCharacter(player);
+				bluefrog->builderEnhanceCharacter(player);
 
 			} else if (templatePath == "credits") {
 				{
@@ -649,6 +660,138 @@ void SuiManager::handleCharacterBuilderSelectItem(CreatureObject* player, SuiBox
 		}
 
 		player->info("[CharacterBuilder] gave player " + templatePath, true);
+	}
+}
+
+void SuiManager::handleETerminalSelectItem(CreatureObject* player, SuiBox* suiBox, uint32 cancel, Vector<UnicodeString>* args) {
+	if (!ConfigManager::instance()->getEnhancementTerminalEnabled())
+		return;
+
+	ZoneServer* zserv = player->getZoneServer();
+
+	if (args->size() < 1)
+		return;
+
+	bool otherPressed = false;
+	int index = 0;
+
+	if (args->size() > 1) {
+		otherPressed = Bool::valueOf(args->get(0).toString());
+		index = Integer::valueOf(args->get(1).toString());
+	} else {
+		index = Integer::valueOf(args->get(0).toString());
+	}
+
+	if (!suiBox->isETerminalBox())
+		return;
+
+	ManagedReference<SuiETerminalBox*> cbSui = cast<SuiETerminalBox*>( suiBox);
+
+	ETerminalMenuNode* currentNode = cbSui->getCurrentNode();
+
+	PlayerObject* ghost = player->getPlayerObject();
+
+	//If cancel was pressed then we kill the box/menu.
+	if (cancel != 0 || ghost == nullptr)
+		return;
+
+	//Back was pressed. Send the node above it.
+	if (otherPressed) {
+		ETerminalMenuNode* parentNode = currentNode->getParentNode();
+
+		if (parentNode == nullptr)
+			return;
+
+		cbSui->setCurrentNode(parentNode);
+
+		ghost->addSuiBox(cbSui);
+		player->sendMessage(cbSui->generateMessage());
+		return;
+	}
+
+	ETerminalMenuNode* node = currentNode->getChildNodeAt(index);
+
+	//Node doesn't exist or the index was out of bounds. Should probably resend the menu here.
+	if (node == nullptr) {
+		ghost->addSuiBox(cbSui);
+		player->sendMessage(cbSui->generateMessage());
+		return;
+	}
+
+	if (node->hasChildNodes()) {
+		//If it has child nodes, display them.
+		cbSui->setCurrentNode(node);
+		ghost->addSuiBox(cbSui);
+		player->sendMessage(cbSui->generateMessage());
+	} else {
+		ManagedReference<SceneObject*> scob = cbSui->getUsingObject();
+
+		if (scob == nullptr)
+			return;
+
+		ETerminal* eTerminal = scob.castTo<ETerminal*>();
+
+		if (eTerminal == nullptr)
+			return;
+
+		String templatePath = node->getTemplatePath();
+		int buffCost = ConfigManager::instance()->getBuffCost();
+		int cleanseCost = ConfigManager::instance()->getCleanseCost();
+		int removeCost = ConfigManager::instance()->getRemoveCost();
+
+		if (templatePath.indexOf(".iff") < 0) {
+
+			if (templatePath == "cleanse_character") {
+				StringBuffer insufficientMsg;
+				insufficientMsg << "You do not have enough credits. You need " << cleanseCost << " credits to cleanse yourself.";
+
+				if (player->isInCombat()) {
+					player->sendSystemMessage("You can not use cleanse while in combat.");
+					return;
+				} else if (player->getCashCredits() < cleanseCost && player->getBankCredits() < cleanseCost) {
+					player->sendSystemMessage(insufficientMsg.toString());
+					return;
+				} else if (player->getCashCredits() >= cleanseCost) {
+					player->subtractCashCredits(cleanseCost);
+				} else {
+					player->subtractBankCredits(cleanseCost);
+				}
+
+				player->sendSystemMessage("You have been cleansed from the signs of previous battles.");
+
+				for (int i = 0; i < 9; ++i) {
+					player->setWounds(i, 0);
+				}
+
+				player->setShockWounds(0);
+
+			} else if (templatePath == "reset_buffs") {
+				StringBuffer insufficientMsg;
+				insufficientMsg << "You do not have enough credits. You need " << removeCost << " credits to remove buffs.";
+
+				if (player->isInCombat()) {
+					player->sendSystemMessage("You can not remove your buffs while in combat.");
+					return;
+				} else if (player->getCashCredits() < removeCost && player->getBankCredits() < removeCost) {
+					player->sendSystemMessage(insufficientMsg.toString());
+					return;
+				} else if (player->getCashCredits() >= removeCost) {
+					player->subtractCashCredits(removeCost);
+				} else {
+					player->subtractBankCredits(removeCost);
+				}
+				player->sendSystemMessage("Your buffs have been reset.");
+				player->clearBuffs(true, false);
+				ghost->setFoodFilling(0);
+				ghost->setDrinkFilling(0);
+
+			} else if (templatePath == "enhance_character") {
+				eTerminal->terminalEnhanceCharacter(player);
+			}
+
+			ghost->addSuiBox(cbSui);
+			player->sendMessage(cbSui->generateMessage());
+		}
 	}
 }
 

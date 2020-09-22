@@ -21,9 +21,16 @@ void ResourceLabratory::initialize(ZoneServer* server) {
 	SharedLabratory::initialize(server);
 	Reference<Lua* > lua = new Lua();
 	lua->init();
-	if (!lua->runFile("scripts/managers/crafting/bio_skill_mods.lua")) {
+
+	bool res = lua->runFile("custom_scripts/managers/crafting/bio_skill_mods.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/crafting/bio_skill_mods.lua");
+
+	if (!res) {
 		return;
 	}
+
 	LuaObject bioModsTable = lua->getGlobalObject("bioSkillMods");
 	if (!bioModsTable.isValidTable())
 		return;

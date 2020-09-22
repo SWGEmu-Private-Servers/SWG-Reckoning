@@ -19,6 +19,10 @@
 #include "server/zone/objects/intangible/PetControlDevice.h"
 #include "server/zone/managers/creature/PetManager.h"
 
+#include "templates/manager/TemplateManager.h"
+#include "server/zone/objects/player/sui/callbacks/WallPurchaseSuiCallback.h"
+#include "server/zone/objects/player/sui/listbox/SuiListBox.h"
+
 void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneObject, ObjectMenuResponse* menuResponse, CreatureObject* creature) const {
 
 	if(!sceneObject->isTerminal())
@@ -63,13 +67,15 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 
 	if (structureObject->isOnAdminList(creature)) {
 		menuResponse->addRadialMenuItem(118, 3, "@player_structure:management"); //Structure Management
+
 		menuResponse->addRadialMenuItemToRadialID(118, 128, 3, "@player_structure:permission_destroy"); //Destroy Structure
+		menuResponse->addRadialMenuItemToRadialID(118, 132, 3, "@player_structure:permission_packup"); //Pack-Up Structure
+
 		menuResponse->addRadialMenuItemToRadialID(118, 124, 3, "@player_structure:management_status"); //Status
 		menuResponse->addRadialMenuItemToRadialID(118, 129, 3, "@player_structure:management_pay"); //Pay Maintenance
 
-		if (structureObject->isGuildHall()) {
+		if (structureObject->isGuildHall() || structureObject->isOwnerOf(creature))
 			menuResponse->addRadialMenuItemToRadialID(118, 70, 3, "@player_structure:take_maintenance"); // Withdraw Maintenance
-		}
 
 		menuResponse->addRadialMenuItemToRadialID(118, 50, 3, "@player_structure:management_name_structure"); //Name Structure
 
@@ -119,6 +125,10 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 			menuResponse->addRadialMenuItemToRadialID(117, 120, 3, "@player_structure:permission_banned"); //Ban List
 			menuResponse->addRadialMenuItemToRadialID(117, 122, 3, "@player_structure:permission_vendor"); //Vendor List
 		}
+
+		if (ConfigManager::instance()->getWallPurchaseEnabled())
+			menuResponse->addRadialMenuItem(133, 3, "Purchase Structure Wall");
+
 	} else if(structureObject->isOnPermissionList("VENDOR", creature)) {
 		if (creature->hasSkill("crafting_artisan_business_03")) {
 			menuResponse->addRadialMenuItem(118, 3, "@player_structure:management"); //Structure Management
@@ -129,14 +139,14 @@ void StructureTerminalMenuComponent::fillObjectMenuResponse(SceneObject* sceneOb
 
 int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObject, CreatureObject* creature, byte selectedID) const {
 	ManagedReference<Terminal*> terminal = cast<Terminal*>(sceneObject);
-	if(terminal == nullptr)
+	if (terminal == nullptr)
 		return 1;
 
-	if(!creature->isPlayerCreature())
+	if (!creature->isPlayerCreature())
 		return 1;
 
 	ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
-	if( ghost == nullptr )
+	if (ghost == nullptr )
 		return 1;
 
 	ManagedReference<StructureObject*> structureObject = cast<StructureObject*>(terminal->getControlledObject());
@@ -208,6 +218,9 @@ int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObj
 		case 128:
 			creature->executeObjectControllerAction(0x18FC1726, structureObject->getObjectID(), ""); //destroyStructure
 			break;
+		case 132:
+			creature->executeObjectControllerAction(0x184759BF, structureObject->getObjectID(), ""); //packupStructure
+			break;
 		case 129:
 			creature->executeObjectControllerAction(0xE7E35B30, structureObject->getObjectID(), ""); //payMaintenance
 			break;
@@ -256,8 +269,33 @@ int StructureTerminalMenuComponent::handleObjectMenuSelect(SceneObject* sceneObj
 		case 131: // Assign Droid
 			structureManager->promptMaintenanceDroid(structureObject,creature);
 			break;
-		}
+		case 133:
+			ManagedReference<SuiListBox*> sui = new SuiListBox(creature);
+			sui->setCallback(new WallPurchaseSuiCallback(creature->getZoneServer()));
+			sui->setCancelButton(true, "@cancel");
+			sui->setOkButton(true, "@ui_auc:buy");
+			sui->setPromptTitle("Purchase Structure Wall");
+			sui->setPromptText("You can purchase placeable walls to further decorate your house.");
 
+			TemplateManager* templateManager = TemplateManager::instance();
+			int wallCost = ConfigManager::instance()->getWallPurchaseCost();
+			Vector<String> walls = ConfigManager::instance()->getStructureWalls();
+
+			for (int i = 0; i < walls.size(); ++i) {
+				String itemTemplate = walls.get(i);
+				SharedObjectTemplate* objectTemplate = dynamic_cast<SharedObjectTemplate*>(templateManager->getTemplate(itemTemplate.hashCode()));
+
+				if (objectTemplate == nullptr)
+					continue;
+
+				sui->addMenuItem("Wall, Style " + String::valueOf(i + 1) + " | " + String::valueOf(wallCost) + " Credits.");
+			}
+
+			sui->setUsingObject(terminal);
+			ghost->addSuiBox(sui);
+			creature->sendMessage(sui->generateMessage());
+			break;
+		}
 	}
 
 	if(selectedID == 130 && (structureObject->isOnAdminList(creature) || structureObject->isOnPermissionList("VENDOR", creature))) {

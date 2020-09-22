@@ -89,6 +89,7 @@ private:
 	void registerConsoleCommmands();
 	CommandResult processConsoleCommand(const String& commandString);
 
+
 public:
 	ServerCore(bool truncateDatabases, const SortedVector<String>& args);
 	~ServerCore();

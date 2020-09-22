@@ -89,6 +89,7 @@
 #include "server/zone/objects/staticobject/StaticObject.h"
 #include "server/zone/objects/building/BuildingObject.h"
 
+
 //#define SHOW_WALK_PATH
 //#define DEBUG
 //#define SHOW_NEXT_POSITION
@@ -2809,13 +2810,19 @@ bool AiAgentImplementation::isAggressiveTo(CreatureObject* target) {
 
 	// check the GCW factions if both entities have one
 	if (getFaction() != 0 && targetFaction != 0) {
-
-		// this is basically the isEnemy check, but with the GCW faction (they should both return the same thing)
-		if (ghost == nullptr && (targetFaction != getFaction()))
-			return true;
-		// this is the same thing, but ensures that if the target is a player, that they aren't on leave
-		else if (ghost != nullptr && (targetFaction != getFaction()) && target->getFactionStatus() != FactionStatus::ONLEAVE)
-			return true;
+		if (ConfigManager::instance()->getTefEnabled()) {
+			if (ghost == nullptr && (targetFaction != getFaction()))
+				return true;
+			else if (ghost != nullptr && targetFaction != getFaction() && ghost->isPvpFlagged())
+				return true;
+		} else {
+			// this is basically the isEnemy check, but with the GCW faction (they should both return the same thing)
+			if (ghost == nullptr && (targetFaction != getFaction()))
+				return true;
+			// this is the same thing, but ensures that if the target is a player, that they aren't on leave
+			else if (ghost != nullptr && (targetFaction != getFaction()) && target->getFactionStatus() != FactionStatus::ONLEAVE)
+				return true;
+		}
 	}
 
 	// now grab the generic faction (which could include imp/reb)
@@ -3310,8 +3317,22 @@ bool AiAgentImplementation::isAttackableBy(CreatureObject* object) {
 			return false;
 		}
 
-		if (object->isPlayerCreature() && (targetFaction == 0 || (object->getFactionStatus() == FactionStatus::ONLEAVE))) {
+		if (object->isPlayerCreature()) {
+			PlayerObject* ghost = object->getPlayerObject();
+
+			if (ghost == nullptr)
 				return false;
+
+			if (ghost->hasSpawnProtection())
+				return false;
+
+			if (ConfigManager::instance()->getTefEnabled()) {
+				if (targetFaction == 0)
+					return false;
+			} else {
+				if (targetFaction == 0 || object->getFactionStatus() == FactionStatus::ONLEAVE)
+					return false;
+			}
 		}
 	}
 

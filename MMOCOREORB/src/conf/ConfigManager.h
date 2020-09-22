@@ -525,24 +525,321 @@ namespace conf {
 			return getInt("Core3.RESTServerPort", 0);
 		}
 
-		inline const String& getInactiveAccountTitle() {
-			return getString("Core3.InactiveAccountTitle", "Account Disabled");
-		}
-
-		inline const String& getInactiveAccountText() {
-			return getString("Core3.InactiveAccountText", "The server administrators have disabled your account.");
-		}
-
-		inline bool getCharacterBuilderEnabled() {
-			return getBool("Core3.CharacterBuilderEnabled", false);
-		}
-
 		inline int getPlayerLogLevel() {
 			return getInt("Core3.PlayerLogLevel", Logger::INFO);
 		}
 
 		inline int getMaxLogLines() {
 			return getInt("Core3.MaxLogLines", 1000000);
+		}
+
+		////////////////////////
+		//Custom Server Settings
+		////////////////////////
+
+		//Login Error Messages
+		inline const String& getRevisionError() {
+			return getString("Core3.revisionError", "The client you are attempting to connect with does not match that required by the server.");
+		}
+		inline const String& getRegisterError() {
+			return getString("Core3.registerError", "Automatic registration is currently disabled. Please contact the administrators of the server in order to get an authorized account.");
+		}
+		inline const String& getActivateError() {
+			return getString("Core3.activateError", "The server administrators have disabled your account.");
+		}
+		inline const String& getPasswordError() {
+			return getString("Core3.passwordError", "The password you entered was incorrect.");
+		}
+		inline const String& getBannedError() {
+			return getString("Core3.bannedError", "Your account has been banned from the server by the administrators.\n\n");
+		}
+
+		//Character Creation
+		inline int getCharactersPerGalaxy() {
+			return getInt("Core3.charactersPerGalaxy", 10);
+		}
+		inline const String& getCharactersPerGalaxyError() {
+			return getString("Core3.charactersPerGalaxyError", "You are limited to 10 characters per galaxy.");
+		}
+		inline int getCreateTime() {
+			return getInt("Core3.createTime", 86400000);
+		}
+		inline const String& getCreateTimeError() {
+			return getString("Core3.createTimeError", "You are limited to creating one character every 24 hours. Attempting to create another character or deleting your character before the 24 hour timer expires will reset the timer.");
+		}
+		inline const String& getCreateSuiTitle() {
+			return getString("Core3.createSuiTitle", "PLEASE NOTE");
+		}
+		inline const String& getCreateSuiMessage() {
+			return getString("Core3.createSuiMessage", "You are limited to creating one character every 24 hours. Attempting to create another character or deleting your character before the 24 hour timer expires will reset the timer.");
+		}
+
+		//Status Server Population Display
+		inline bool getPopDisplayEnabled() {
+			return getBool("Core3.popDisplayEnabled", true);
+		}
+		inline bool getLoadDisplayEnabled() {
+			return getBool("Core3.loadDisplayEnabled", false);
+		}
+		inline int getMediumLoad() {
+			return getInt("Core3.mediumLoad", 0);
+		}
+		inline int getHeavyLoad() {
+			return getInt("Core3.heavyLoad", 0);
+		}
+		inline int getVeryHeavyLoad() {
+			return getInt("Core3.veryHeavyLoad", 0);
+		}
+
+		//Chat Logging
+		inline bool getChatLoggingEnabled() {
+			return getBool("Core3.chatLoggingEnabled", false);
+		}
+
+		//General Chat
+		inline bool getGeneralChatEnabled() {
+			return getBool("Core3.generalChatEnabled", false);
+		}
+
+		//Custom Chat
+		inline bool getCustomRoomsEnabled() {
+			return getBool("Core3.customRoomsEnabled", false);
+		}
+
+		//Enhancement Terminal
+		inline bool getEnhancementTerminalEnabled() {
+			return getBool("Core3.enhancementTerminalEnabled", false);
+		}
+		inline int getBuffCost() {
+			return getInt("Core3.buffCost", 500);
+		}
+		inline int getCleanseCost() {
+			return getInt("Core3.cleanseCost", 500);
+		}
+		inline int getRemoveCost() {
+			return getInt("Core3.removeCost", 500);
+		}
+		inline int getTerminalPerformanceBuff() {
+			return getInt("Core3.terminalPerformanceBuff", 500);
+		}
+		inline int getTerminalMedicalBuff() {
+			return getInt("Core3.terminalMedicalBuff", 500);
+		}
+		inline int getTerminalPerformanceDuration() {
+			return getInt("Core3.terminalPerformaceDuration", 3600);
+		}
+		inline int getTerminalMedicalDuration() {
+			return getInt("Core3.terminalMedicalDuration", 3600);
+		}
+
+		//Character Builder
+		inline bool getCharacterBuilderEnabled() {
+			return getBool("Core3.characterBuilderEnabled", false);
+		}
+		inline int getBuilderPerformanceBuff() {
+			return getInt("Core3.builderPerformanceBuff", 1000);
+		}
+		inline int getBuilderMedicalBuff() {
+			return getInt("Core3.builderMedicalBuff", 1900);
+		}
+		inline int getBuilderPerformanceDuration() {
+			return getInt("Core3.builderPerformanceDuration", 7200);
+		}
+		inline int getBuilderMedicalDuration() {
+			return getInt("Core3.builderMedicalDuration", 7200);
+		}
+
+		//Jedi Unlock
+		inline bool getCustomUnlockEnabled() {
+			return getBool("Core3.customUnlockEnabled", false);
+		}
+		inline int getRandJedi1() {
+			return getInt("Core3.randJedi1", 0);
+		}
+		inline int getRandJedi2() {
+			return getInt("Core3.randJedi2", 0);
+		}
+		inline int getRandJedi3() {
+			return getInt("Core3.randJedi3", 0);
+		}
+		inline int getRandJedi4() {
+			return getInt("Core3.randJedi4", 0);
+		}
+		inline int getRandJedi5() {
+			return getInt("Core3.randJedi5", 0);
+		}
+		inline int getRandJedi6() {
+			return getInt("Core3.randJedi6", 0);
+		}
+
+		//Shrine Jedi Progression Check
+		inline bool getShrineProgressionEnabled() {
+			return getBool("Core3.shrineProgressionEnabled", false);
+		}
+
+		//Galaxy Jedi Unlock Message
+		inline bool getUnlockMessageEnabled() {
+			return getBool("Core3.unlockMessageEnabled", false);
+		}
+		inline const String& getUnlockMessage() {
+			return getString("Core3.unlockMessage", "IMPERIAL COMMUNICATION FROM THE REGIONAL GOVERNOR: Lord Vader has detected a vergence in the Force.\n Be on the lookout for any suspicious persons displaying unique or odd abilities. Lord Vader authorizes all citizens to use deadly force to eliminate this threat to the Empire.");
+		}
+
+		//Fight Clubbing Prevention
+		inline bool getFightClubbingPreventionEnabled() {
+			return getBool("Core3.fightClubbingPreventionEnabled", false);
+		}
+
+		//Bounty Hunter PvP Traps
+		inline bool getPvpTrapEnabled() {
+			return getBool("Core3.pvpTrapEnabled", false);
+		}
+		inline int getPvpTrapDuration() {
+			return getInt("Core3.pvpTrapDuration", 0);
+		}
+		inline int getPvpTrapImmunityDuration() {
+			return getInt("Core3.pvpTrapImmunityDuration", 0);
+		}
+
+		//Spawn Protection
+		inline bool getSpawnProtectionEnabled() {
+			return getBool("Core3.spawnProtectionEnabled", false);
+		}
+		inline int getSpawnProtectionTime() {
+			return getInt("Core3.spawnProtectionTime", 0);
+		}
+
+		//TEF System
+		inline bool getTefEnabled() {
+			return getBool("Core3.tefEnabled", false);
+		}
+		inline bool getCityTefEnabled() {
+			return getBool("Core3.cityTefEnabled", false);
+		}
+
+		//City Alignment
+		inline int getCityAlignRankReq() {
+			return getInt("Core3.cityAlignRankReq", 0);
+		}
+
+		//Player Bounty
+		inline bool getPlayerBountyEnabled() {
+			return getBool("Core3.playerBountyEnabled", false);
+		}
+
+		//Faction Base TEF Scanner
+		inline bool getTefScannersEnabled() {
+			return getBool("Core3.tefScannersEnabled", false);
+		}
+
+		//Increased House Storage
+		inline bool getIncreasedStorageEnabled() {
+			return getBool("Core3.increasedStorageEnabled", false);
+		}
+		inline int getTwoLots() {
+			return getInt("Core3.twoLots", 0);
+		}
+		inline int getThreeLots() {
+			return getInt("Core3.threeLots", 0);
+		}
+		inline int getFourLots() {
+			return getInt("Core3.fourLots", 0);
+		}
+		inline int getFiveLots() {
+			return getInt("Core3.fiveLots", 0);
+		}
+
+		//Post 14.1 Furniture Rotation
+		inline bool getAllRotationEnabled() {
+			return getBool("Core3.allRotationEnabled", false);
+		}
+
+		//Crafted Item Renaming
+		inline bool getItemRenamingEnabled() {
+			return getBool("Core3.itemRenamingEnabled", false);
+		}
+
+		//Event System
+		inline bool getEventSystemEnabled() {
+			return getBool("Core3.eventSystemEnabled", false);
+		}
+		inline bool getAwardBadgeEnabled() {
+			return getBool("Core3.awardBadgeEnabled", false);
+		}
+		inline bool getAwardItemEnabled() {
+			return getBool("Core3.awardItemEnabled", false);
+		}
+		inline int getAwardedBadge1() {
+			return getInt("Core3.awardedBadge1", 0);
+		}
+		inline int getAwardedBadge2() {
+			return getInt("Core3.awardedBadge2", 0);
+		}
+		inline const String& getAwardedItem1() {
+			return getString("Core3.awardedItem1", "");
+		}
+		inline const String& getAwardedItem2() {
+			return getString("Core3.awardedItem2", "");
+		}
+
+		//Reckoning Credits
+		inline bool getReckoningCreditsEnabled() {
+			return getBool("Core3.reckoningCreditsEnabled", false);
+		}
+		inline int getReckoningCreditsDropRate() {
+			return getInt("Core3.reckoningCreditsDropRate", 0);
+		}
+
+		//Reckoning Reward Npc
+		inline int getRenameCost() {
+			return getInt("Core3.renameCost", 0);
+		}
+
+		//Update Galaxy Harvester
+		inline bool getUpdateGhEnabled() {
+			return getBool("Core3.updateGhEnabled", false);
+		}
+
+		//Structure Packup
+		inline bool getStructurePackupEnabled() {
+			return getBool("Core3.structurePackupEnabled", false);
+		}
+
+		//Inactive Structure Packup
+		inline bool getInactivePackupEnabled() {
+			return getBool("Core3.inactivePackupEnabled", false);
+		}
+		inline int getInactivePackupDays() {
+			return getInt("Core3.inactivePackupDays", 0);
+		}
+
+		//Vendor Packup
+		inline bool getVendorPackupEnabled() {
+			return getBool("Core3.vendorPackupEnabled", false);
+		}
+
+		//Character Stat Tracking
+		inline bool getCharacterStatsEnabled() {
+			return getBool("Core3.characterStatsEnabled", false);
+		}
+
+		//Vendor Expired Item Relist
+		inline bool getItemRelistEnabled() {
+			return getBool("Core3.itemRelistEnabled", false);
+		}
+		inline int getItemRelistFee() {
+			return getInt("Core3.itemRelistFee", 0);
+		}
+
+		//Structure Wall Purchase
+		inline bool getWallPurchaseEnabled() {
+			return getBool("Core3.wallPurchaseEnabled", false);
+		}
+		inline int getWallPurchaseCost() {
+			return getInt("Core3.wallPurchaseCost", 0);
+		}
+		inline const Vector<String>& getStructureWalls() {
+			return getStringVector("Core3.StructureWalls");
 		}
 
 		inline int getSessionStatsSeconds() {

@@ -47,10 +47,22 @@ public:
 		box->setOkButton(true, "@ok");
 		box->setCancelButton(true, "@cancel");
 
+		String councilString;
+		String stfRank;
+
+		if (playerCouncil == 1)
+			councilString = "light";
+		else if (playerCouncil == 2)
+			councilString = "dark";
+
 		for (int i = 1; i < 12; i++) {
-			String stfRank = "@force_rank:rank" + String::valueOf(i);
-			String rankString = StringIdManager::instance()->getStringId(stfRank.hashCode()).toString();
-			box->addMenuItem(rankString);
+			if (i >= 1 && i <= 9)
+				stfRank = "@skl_n:force_rank_" + councilString + "_rank_0" + String::valueOf(i);
+			else if (i == 10)
+				stfRank = "@skl_n:force_rank_" + councilString + "_rank_10";
+			else if (i == 11)
+				stfRank = "@skl_n:force_rank_" + councilString + "_master";
+			box->addMenuItem(stfRank);
 		}
 
 		ghost->addSuiBox(box);

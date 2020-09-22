@@ -37,6 +37,7 @@
 #include "server/zone/objects/building/components/EnclaveContainerComponent.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
+
 void BuildingObjectImplementation::initializeTransientMembers() {
 	StructureObjectImplementation::initializeTransientMembers();
 
@@ -106,7 +107,7 @@ void BuildingObjectImplementation::notifyInsertToZone(Zone* zone) {
 #endif // DEBUG_STRUCTURE_MAINT
 }
 
-int BuildingObjectImplementation::getCurrentNumberOfPlayerItems() {
+int BuildingObjectImplementation::getCurrentNumberOfPlayerItems() const {
 	int items = 0;
 
 	for (int i = 0; i < cells.size(); ++i) {
@@ -116,6 +117,18 @@ int BuildingObjectImplementation::getCurrentNumberOfPlayerItems() {
 	}
 
 	return items;
+}
+
+int BuildingObjectImplementation::getCurrentNumberOfPlayerVendors() const {
+	int vendors = 0;
+
+	for (int i = 0; i < cells.size(); ++i) {
+		auto& cell = cells.get(i);
+
+		vendors += cell->getCurrentNumberOfPlayerVendors();
+	}
+
+	return vendors;
 }
 
 void BuildingObjectImplementation::createCellObjects() {
@@ -400,8 +413,7 @@ bool BuildingObjectImplementation::isAllowedEntry(CreatureObject* player) {
 
 	if (!isClientObject()) {
 		PlayerObject* ghost = player->getPlayerObject().get();
-
-		if (ghost != nullptr && ghost->hasPvpTef()) {
+		if (ghost != nullptr && (ghost->hasGcwTef() || ghost->hasBhTef())) {
 			return false;
 		}
 	}
@@ -916,6 +928,17 @@ uint32 BuildingObjectImplementation::getMaximumNumberOfPlayerItems() {
 	//Buildings that don't cost lots have MAXPLAYERITEMS storage space.
 	if (lots == 0)
 		return MAXPLAYERITEMS;
+
+	if (ConfigManager::instance()->getIncreasedStorageEnabled()) {
+		if (lots == 2)
+			return ConfigManager::instance()->getTwoLots();
+		if (lots == 3)
+			return ConfigManager::instance()->getThreeLots();
+		if (lots == 4)
+			return ConfigManager::instance()->getFourLots();
+		if (lots == 5)
+			return ConfigManager::instance()->getFiveLots();
+	}
 
 	auto maxItems = MAXPLAYERITEMS;
 
@@ -1684,6 +1707,16 @@ void BuildingObjectImplementation::changeSign(const SignTemplate* signConfig) {
 
 		oldSign->destroyObjectFromWorld(true);
 		oldSign->destroyObjectFromDatabase(true);
+	} else {
+		BuildingObject* building = asBuildingObject();
+		CreatureObject* owner = getOwnerCreatureObject();
+
+		if (building != nullptr && owner != nullptr) {
+			if (!building->isCivicStructure() && !building->isCommercialStructure()) {
+				building->setCustomObjectName(owner->getFirstName() + "'s House", true);
+				signName = building->getCustomObjectName();
+			}
+		}
 	}
 
 	Locker clocker2(signObject, asBuildingObject());
@@ -1692,7 +1725,7 @@ void BuildingObjectImplementation::changeSign(const SignTemplate* signConfig) {
 	signObject->initializeChildObject(asBuildingObject());  // should call BuildingObject::setSignObject
 
 	// Set to old sign name
-	setCustomObjectName( signName, true );
+	setCustomObjectName(signName, true);
 }
 
 bool BuildingObjectImplementation::togglePrivacy() {
@@ -1823,4 +1856,20 @@ String BuildingObjectImplementation::getCellName(uint64 cellID) const {
 		return "";
 
 	return cellProperty->getName();
+}
+
+String BuildingObjectImplementation::getPackupMessage() const {
+	if (!ConfigManager::instance()->getStructurePackupEnabled())
+		return "packup_not_eligible_01";
+
+	if (isCivicStructure() || isGCWBase())
+		return "packup_not_eligible_02";
+
+	if (getCurrentNumberOfPlayerItems() <= 0)
+		return "packup_not_eligible_03";
+
+	if (!ConfigManager::instance()->getVendorPackupEnabled() && getCurrentNumberOfPlayerVendors() > 0)
+		return "packup_not_eligible_04";
+
+	return "";
 }

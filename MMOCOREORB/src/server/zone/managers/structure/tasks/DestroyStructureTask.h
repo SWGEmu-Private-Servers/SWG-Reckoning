@@ -129,4 +129,3 @@ public:
 };
 
 #endif /* DESTROYSTRUCTURETASK_H_ */
-

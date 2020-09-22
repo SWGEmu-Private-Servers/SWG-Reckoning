@@ -90,7 +90,10 @@ CreatureTemplateManager::CreatureTemplateManager() : Logger("CreatureTemplateMan
 }
 
 void CreatureTemplateManager::loadLuaConfig() {
-	lua->runFile("scripts/managers/creature_manager.lua");
+	bool res = lua->runFile("custom_scripts/managers/creature_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/creature_manager.lua");
 
 	LuaObject luaObject = lua->getGlobalObject("aiSpeciesData");
 
@@ -124,19 +127,22 @@ int CreatureTemplateManager::loadTemplates() {
 	if (!DEBUG_MODE)
 		info("loading mobile templates...", true);
 
-	bool ret = false;
+	bool res = false;
 
 	try {
-		ret = lua->runFile("scripts/mobile/creatures.lua");
+		res = lua->runFile("custom_scripts/mobile/creatures.lua");
+
+		if (!res)
+			res = lua->runFile("scripts/mobile/creatures.lua");
 	} catch (Exception& e) {
 		error(e.getMessage());
 		e.printStackTrace();
-		ret = false;
+		res = false;
 	}
 
 	lua = nullptr;
 
-	if (!ret)
+	if (!res)
 		ERROR_CODE = GENERAL_ERROR;
 
 	if (!DEBUG_MODE) {
@@ -169,9 +175,12 @@ int CreatureTemplateManager::includeFile(lua_State* L) {
 
 	int oldError = ERROR_CODE;
 
-	bool ret = Lua::runFile("scripts/mobile/" + filename, L);
+	bool res = Lua::runFile("custom_scripts/mobile/" + filename, L);
 
-	if (!ret) {
+	if (!res)
+		res = Lua::runFile("scripts/mobile/" + filename, L);
+
+	if (!res) {
 		ERROR_CODE = GENERAL_ERROR;
 
 		instance()->error("running file scripts/mobile/" + filename);

@@ -12,6 +12,9 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
 
+#include "server/zone/managers/log/ReckoningLogManager.h"
+#include "server/zone/managers/log/LogType.h"
+
 void ObjectControllerImplementation::loadCommands() {
 	configManager = new CommandConfigManager(server);
 	queueCommands = new CommandList();
@@ -23,12 +26,6 @@ void ObjectControllerImplementation::loadCommands() {
 	StringBuffer infoMsg;
 	infoMsg << "loaded " << queueCommands->size() << " commands";
 	info(infoMsg.toString(), true);
-
-	adminLog.setLoggingName("AdminCommands");
-	StringBuffer fileName;
-	fileName << "log/admin/admin.log";
-	adminLog.setFileLogger(fileName.toString(), true);
-	adminLog.setLogging(true);
 
 	// LUA
 	/*init();
@@ -121,8 +118,14 @@ float ObjectControllerImplementation::activateCommand(CreatureObject* object, un
 				Reference<PlayerObject*> ghost =  object->getSlottedObject("ghost").castTo<PlayerObject*>();
 
 				if (ghost == nullptr || !ghost->hasGodMode() || !ghost->hasAbility(queueCommand->getQueueCommandName())) {
-					adminLog.warning() << object->getDisplayedName() << " attempted to use the '/" << queueCommand->getQueueCommandName()
-							<< "' command without permissions";
+					ManagedReference<ReckoningLogManager*> logMan = object->getZoneServer()->getReckoningLogManager();
+
+					if (logMan != nullptr) {
+						StringBuffer logEntry;
+						logEntry << object->getDisplayedName() << " attempted to use the '/" << queueCommand->getQueueCommandName()
+								<< "' command without permissions";
+						logMan->logAction(LogType::STAFFCOMMAND, logEntry.toString());
+					}
 
 					object->sendSystemMessage("@error_message:insufficient_permissions");
 					object->clearQueueAction(actionCount, 0, 2);
@@ -196,6 +199,12 @@ void ObjectControllerImplementation::logAdminCommand(SceneObject* object, const 
 		name = "(null)";
 	}
 
-	adminLog.info() << object->getDisplayedName() << " used '/" << queueCommand->getQueueCommandName()
-								<< "' on " << name << " with params '" << arguments.toString() << "'";
+	ManagedReference<ReckoningLogManager*> logMan = object->getZoneServer()->getReckoningLogManager();
+
+	if (logMan != nullptr) {
+		StringBuffer logEntry;
+		logEntry << object->getDisplayedName() << " used '/" << queueCommand->getQueueCommandName()
+				<< "' on " << name << " with params '" << arguments.toString() << "'";
+		logMan->logAction(LogType::STAFFCOMMAND, logEntry.toString());
+	}
 }

@@ -25,6 +25,7 @@
 #include "templates/installation/FactoryObjectTemplate.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
+
 void FactoryObjectImplementation::loadTemplateData(SharedObjectTemplate* templateData) {
 	InstallationObjectImplementation::loadTemplateData(templateData);
 
@@ -426,7 +427,7 @@ bool FactoryObjectImplementation::startFactory() {
 			return false;
 	}
 
-	timer = ((int)schematic->getComplexity()) * 8;
+	timer = ((int)schematic->getComplexity()) * 2;
 
 	if(!populateSchematicBlueprint(schematic))
 		return false;
@@ -572,6 +573,8 @@ void FactoryObjectImplementation::createNewObject() {
 		stopFactory("manf_error", "", "", -1);
 		return;
 	}
+
+	crateSize = 1000;
 
 	if (crateSize > 1) {
 		ManagedReference<FactoryCrate*> crate = locateCrateInOutputHopper(prototype);

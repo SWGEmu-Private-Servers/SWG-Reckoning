@@ -21,8 +21,6 @@ void VendorOutfitManager::loadLuaOutfits() {
 	Lua lua;
 	lua.init();
 
-	lua.runFile("scripts/mobile/wearables/outfits.lua");
-
 	LuaObject Luaoutfits = lua.getGlobalObject("Outfits");
 
 	for (int i = 1; i < Luaoutfits.getTableSize() + 1; ++i) {

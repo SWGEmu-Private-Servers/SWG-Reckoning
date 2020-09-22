@@ -575,43 +575,48 @@ void BountyMissionObjectiveImplementation::handlePlayerKilled(ManagedObject* arg
 	ManagedReference<MissionObject* > mission = this->mission.get();
 	ManagedReference<CreatureObject*> owner = getPlayerOwner();
 
-	if(mission == nullptr)
+	if (mission == nullptr)
 		return;
 
 	if (owner != nullptr && killer != nullptr && !completedMission) {
-		if (owner->getObjectID() == killer->getObjectID()) {
-			//Target killed by player, complete mission.
-			ZoneServer* zoneServer = owner->getZoneServer();
-			if (zoneServer != nullptr) {
-				ManagedReference<CreatureObject*> target = zoneServer->getObject(mission->getTargetObjectId()).castTo<CreatureObject*>();
-				if (target != nullptr) {
-					int minXpLoss = -50000;
-					int maxXpLoss = -500000;
+		ZoneServer* zoneServer = owner->getZoneServer();
+		if (zoneServer == nullptr)
+			return;
 
-					VisibilityManager::instance()->clearVisibility(target);
-					int xpLoss = mission->getRewardCredits() * -2;
+		ManagedReference<CreatureObject*> target = nullptr;
 
-					if (xpLoss > minXpLoss)
-						xpLoss = minXpLoss;
-					else if (xpLoss < maxXpLoss)
-						xpLoss = maxXpLoss;
+		if (npcTarget != nullptr)
+			target == npcTarget;
+		else
+			target = zoneServer->getObject(mission->getTargetObjectId()).castTo<CreatureObject*>();
 
-					owner->getZoneServer()->getPlayerManager()->awardExperience(target, "jedi_general", xpLoss, true);
-					StringIdChatParameter message("base_player","prose_revoke_xp");
-					message.setDI(xpLoss * -1);
-					message.setTO("exp_n", "jedi_general");
-					target->sendSystemMessage(message);
-				}
+		if (target == nullptr)
+			return;
+
+		if (owner->getObjectID() == killer->getObjectID() || (owner->getGroupID() != 0 && owner->getGroupID() == killer->getGroupID())) {
+			if (target->hasSkill("force_title_jedi_rank_02")) {
+				int minXpLoss = -50000;
+				int maxXpLoss = -500000;
+
+				VisibilityManager::instance()->clearVisibility(target);
+				int xpLoss = mission->getRewardCredits() * -2;
+
+				if (xpLoss > minXpLoss)
+				xpLoss = minXpLoss;
+				else if (xpLoss < maxXpLoss)
+					xpLoss = maxXpLoss;
+
+				owner->getZoneServer()->getPlayerManager()->awardExperience(target, "jedi_general", xpLoss, true);
+				StringIdChatParameter message("base_player","prose_revoke_xp");
+				message.setDI(xpLoss * -1);
+				message.setTO("exp_n", "jedi_general");
+				target->sendSystemMessage(message);
 			}
-
-			complete();
-		} else if (mission->getTargetObjectId() == killer->getObjectID() ||
-				(npcTarget != nullptr && npcTarget->getObjectID() == killer->getObjectID())) {
-
-			owner->sendSystemMessage("@mission/mission_generic:failed"); // Mission failed
-			killer->sendSystemMessage("You have defeated a bounty hunter, ruining his mission against you!");
-			fail();
+			 complete();
+		} else if (target->getObjectID() == killer->getObjectID() || (target->getGroupID() != 0 && target->getGroupID() == killer->getGroupID())) {
+				owner->sendSystemMessage("@mission/mission_generic:failed"); // Mission failed
+				target->sendSystemMessage("You or a group member has defeated a bounty hunter, ruining his mission against you!");
+				fail();
 		}
 	}
 }
-

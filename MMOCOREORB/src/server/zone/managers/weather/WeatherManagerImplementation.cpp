@@ -54,7 +54,12 @@ bool WeatherManagerImplementation::loadLuaConfig() {
 	Lua* lua = new Lua();
 	lua->init();
 
-	if (!lua->runFile("scripts/managers/weather_manager.lua"))
+	bool res = lua->runFile("custom_scripts/managers/weather_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/weather_manager.lua");
+
+	if (!res)
 		return false;
 
 	LuaObject luaObject = lua->getGlobalObject(zone->getZoneName());

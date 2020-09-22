@@ -17,7 +17,8 @@
 #include "server/zone/objects/region/Region.h"
 #include "server/zone/objects/creature/sui/RepairVehicleSuiCallback.h"
 #include "templates/customization/AssetCustomizationManagerTemplate.h"
-
+#include "templates/manager/TemplateManager.h"
+#include "templates/creature/SharedCreatureObjectTemplate.h"
 
 void VehicleObjectImplementation::fillObjectMenuResponse(ObjectMenuResponse* menuResponse, CreatureObject* player) {
 	if (!player->getPlayerObject()->isPrivileged() && linkedCreature != player)
@@ -116,6 +117,21 @@ void VehicleObjectImplementation::notifyInsertToZone(Zone* zone) {
 		--paintCount;
 	}
 
+	//Ensure Vehicle speed and turn rate matches what's in the .tre file
+	TemplateManager* templateManager = TemplateManager::instance();
+	uint32 vehicleCRC = getObjectTemplate()->getFullTemplateString().hashCode();
+	SharedCreatureObjectTemplate* vehicleTemplate = dynamic_cast<SharedCreatureObjectTemplate*>(templateManager->getTemplate(vehicleCRC));
+
+	if (vehicleTemplate != nullptr) {
+		float speed = vehicleTemplate->getSpeed().get(0);
+		float turn = vehicleTemplate->getTurnRate().get(0);
+
+		if (getRunSpeed() != speed)
+			setRunSpeed(speed, true);
+
+		if (getTurnScale() != turn)
+			setTurnScale(turn, true);
+	}
 }
 
 bool VehicleObjectImplementation::checkInRangeGarage() {

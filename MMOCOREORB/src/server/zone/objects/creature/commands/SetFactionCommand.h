@@ -10,6 +10,7 @@
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/player/FactionStatus.h"
 
+
 class SetFactionCommand : public QueueCommand {
 public:
 
@@ -68,7 +69,11 @@ public:
 		tokenizer.getStringToken(faction);
 
 		if (!tokenizer.hasMoreTokens()) {
-			creature->sendSystemMessage("SYNTAX: /setfaction <name> [imperial | rebel | neutral] [onleave | covert | overt ] [rank]");
+			if (ConfigManager::instance()->getTefEnabled()) {
+				creature->sendSystemMessage("SYNTAX: /setfaction <name> [imperial | rebel | neutral] [covert | overt ] [rank]");
+			} else {
+				creature->sendSystemMessage("SYNTAX: /setfaction <name> [imperial | rebel | neutral] [onleave | covert | overt ] [rank]");
+			}
 			return INVALIDPARAMETERS;
 		}
 
@@ -96,7 +101,7 @@ public:
 					tano->setFactionStatus(FactionStatus::OVERT);
 				} else  if (status == "covert"){
 					tano->setFactionStatus(FactionStatus::COVERT);
-				} else if (status == "onleave") {
+				} else if (status == "onleave" && !ConfigManager::instance()->getTefEnabled()) {
 					tano->setFactionStatus(FactionStatus::ONLEAVE);
 				}
 

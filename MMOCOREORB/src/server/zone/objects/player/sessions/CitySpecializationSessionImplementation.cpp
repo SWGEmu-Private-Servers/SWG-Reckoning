@@ -82,6 +82,13 @@ int CitySpecializationSessionImplementation::sendConfirmationBox(const String& c
 		return cancelSession();
 
 	if (choice != "@city/city:null") {
+		if (choice == "@city/city:city_spec_master_healing" || choice == "@city/city:city_spec_master_manufacturing") {
+			if (cityRegion->getCityRank() < CityRegion::RANK_METROPOLIS) {
+				creatureObject->sendSystemMessage("Your city must be rank 5 to choose this specialization.");
+				return cancelSession();
+			}
+		}
+
 		if (cityRegion->getCityRank() < CityRegion::RANK_TOWNSHIP) {
 			creatureObject->sendSystemMessage("@city/city:no_rank_spec"); //Your city must be at least rank 3 before you can set a specialization
 			return cancelSession();

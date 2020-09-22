@@ -54,6 +54,9 @@ class CityManager extends ManagedService implements Logger {
 	public transient static int missionTerminalsPerRank;
 	public transient static float maintenanceDiscount;
 
+	public transient static int bazaarRankRequired;
+	public transient static int maxBazaarTerminals;
+
 	@dereferenced
 	private transient VectorMap<string, CityRegion> cities;
 
@@ -249,6 +252,8 @@ class CityManager extends ManagedService implements Logger {
 	public native boolean canSupportMoreTrainers(CityRegion city);
 	public native boolean canSupportMoreMissionTerminals(CityRegion city);
 
+	public native boolean canSupportMoreBazaarTerminals(CityRegion city);
+
 	@local
 	public native final CitySpecialization getCitySpecialization(final string cityspec);
 
@@ -264,4 +269,6 @@ class CityManager extends ManagedService implements Logger {
 	public native void promptForceUpdate(CityRegion city, CreatureObject player);
 
 	public native void alignAmenity(CityRegion city, CreatureObject player, SceneObject amenity, int direction);
+
+	public native void setFactionAlignment(CityRegion city, CreatureObject player);
 }

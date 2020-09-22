@@ -41,9 +41,10 @@ public:
 
 		ManagedReference<SceneObject*> obj = creature->getParentRecursively(SceneObjectType::BUILDING);
 		ManagedReference<SceneObject*> tobj = creature->getParentRecursively(SceneObjectType::THEATERBUILDING);
-		if ( obj == nullptr || !obj->isStructureObject() ){
-			// wasn't a building. Is it a theater, as theater has different object flag
-			if (tobj == nullptr || !tobj->isStructureObject()) {
+		ManagedReference<SceneObject*> sobj = creature->getParentRecursively(SceneObjectType::SALONBUILDING);
+
+		if (obj == nullptr || !obj->isStructureObject()) {
+			if ((tobj == nullptr || !tobj->isStructureObject()) && (sobj == nullptr || !sobj->isStructureObject())) {
 				return INVALIDPARAMETERS;
 			}
 		}
@@ -51,8 +52,11 @@ public:
 		if (obj != nullptr) {
 			StructureObject* structure = cast<StructureObject*>(obj.get());
 			StructureManager::instance()->declareResidence(creature, structure);
-		} else {
+		} else if (tobj != nullptr) {
 			StructureObject* structure = cast<StructureObject*>(tobj.get());
+			StructureManager::instance()->declareResidence(creature, structure);
+		} else if (sobj != nullptr) {
+			StructureObject* structure = cast<StructureObject*>(sobj.get());
 			StructureManager::instance()->declareResidence(creature, structure);
 		}
 

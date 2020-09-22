@@ -40,16 +40,28 @@ public:
 
 		ManagedReference<SceneObject*> object = server->getZoneServer()->getObject(target);
 
-		if (object == nullptr)
-			return GENERALERROR;
+		ManagedReference<CreatureObject*> player = nullptr;
+		StringTokenizer args(arguments.toString());
+		String firstName;
 
-
-		if (object->isPlayerCreature()) {
-			CreatureObject* player = cast<CreatureObject*>( object.get());
-
-			if (!player->getPlayerObject()->isIgnoring(creature->getFirstName().toLowerCase()) || godMode)
-				groupManager->inviteToGroup(creature, player);
+		if (args.hasMoreTokens()) {
+			args.getStringToken(firstName);
+			player = server->getZoneServer()->getPlayerManager()->getPlayer(firstName);
 		}
+
+		if (player == nullptr) {
+			if (object != nullptr && object->isPlayerCreature())
+				player = cast<CreatureObject*>(object.get());
+		}
+
+		if (player == nullptr) {
+			creature->sendSystemMessage("Group Invite Error: The specified player does not exist or your target is invalid. Usage: /invite <firstName> or /invite your target,");
+			return GENERALERROR;
+		}
+
+		if (!player->getPlayerObject()->isIgnoring(creature->getFirstName().toLowerCase()) || godMode)
+			groupManager->inviteToGroup(creature, player);
+
 
 		return SUCCESS;
 	}
@@ -57,4 +69,3 @@ public:
 };
 
 #endif //INVITECOMMAND_H_
-

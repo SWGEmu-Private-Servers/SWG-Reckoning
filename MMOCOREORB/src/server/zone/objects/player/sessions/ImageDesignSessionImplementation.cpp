@@ -247,6 +247,8 @@ int ImageDesignSessionImplementation::doPayment() {
 		return 0;
 	}
 
+	Locker crossLocker(designerCreature, targetCreature);
+
 	if (requiredPayment <= targetCreature->getCashCredits()) {
 		TransactionLog trx(targetCreature, designerCreature, TrxCode::IMAGEDESIGN, requiredPayment, true);
 		targetCreature->subtractCashCredits(requiredPayment);

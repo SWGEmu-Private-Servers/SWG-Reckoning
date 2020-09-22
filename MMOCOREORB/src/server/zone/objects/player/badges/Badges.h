@@ -16,12 +16,12 @@
 #include "Badge.h"
 
 class Badges : public Serializable, public ReadWriteLock {
-	uint32 badgeBitmask[5];
+	uint32 badgeBitmask[10];
 	uint8 badgeTypeCounts[6];
 	uint8 badgeTotal;
 public:
 	Badges() {
-		for (int i = 0; i < 5; ++i)
+		for (int i = 0; i < 10; ++i)
 			badgeBitmask[i] = 0;
 
 		for (int i = 0; i < 6; ++i)
@@ -33,7 +33,7 @@ public:
 	}
 
 	Badges(const Badges& badges) : Object(), Serializable(), ReadWriteLock() {
-		for (int i = 0; i < 5; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			badgeBitmask[i] = badges.badgeBitmask[i];
 		}
 
@@ -46,7 +46,7 @@ public:
 	}
 
 	Badges& operator=(const Badges& badges) {
-		for (int i = 0; i < 5; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			badgeBitmask[i] = badges.badgeBitmask[i];
 		}
 
@@ -71,6 +71,11 @@ public:
 		addSerializableVariable("badgeTypeCount4", &badgeTypeCounts[3]);
 		addSerializableVariable("badgeTypeCount5", &badgeTypeCounts[4]);
 		addSerializableVariable("badgeTypeCount6", &badgeTypeCounts[5]);
+		addSerializableVariable("badgeBitmask6", &badgeBitmask[5]);
+		addSerializableVariable("badgeBitmask7", &badgeBitmask[6]);
+		addSerializableVariable("badgeBitmask8", &badgeBitmask[7]);
+		addSerializableVariable("badgeBitmask9", &badgeBitmask[8]);
+		addSerializableVariable("badgeBitmask10", &badgeBitmask[9]);
 
 		addSerializableVariable("badgeTotal", &badgeTotal);
 	}
@@ -113,7 +118,7 @@ public:
 		uint32 bit = badgeIndex % 32;
 		uint32 value = 1 << bit;
 
-		if (bitmaskNumber > 4 || bitmaskNumber < 0) {
+		if (bitmaskNumber > 9 || bitmaskNumber < 0) {
 			Logger::console.error("Badge::setBadge wrong badge index " + String::valueOf(badgeIndex));
 
 			return;
@@ -127,7 +132,12 @@ public:
 		}
 	}
 
-	void unsetBadge(Badge* badge) {
+	void unsetBadge(const uint32 badgeid) {
+		const Badge* badge = BadgeList::instance()->get(badgeid);
+		unsetBadge(badge);
+	}
+
+	void unsetBadge(const Badge* badge) {
 		if (badge == nullptr) return;
 		Locker locker(this);
 
@@ -137,7 +147,7 @@ public:
 		uint32 bit = badgeIndex % 32;
 		uint32 value = 1 << bit;
 
-		if (bitmaskNumber > 4 || bitmaskNumber < 0) {
+		if (bitmaskNumber > 9 || bitmaskNumber < 0) {
 			Logger::console.error("Badge::unsetBadge wrong badge index " + String::valueOf(badgeIndex));
 
 			return;
@@ -149,13 +159,12 @@ public:
 			badgeTypeCounts[badgeType]--;
 			badgeTotal--;
 		}
-
 	}
 
 	bool hasBadge(int badgeindex) const {
 		int bitmaskNumber = badgeindex >> 5;
 
-		if (bitmaskNumber > 4 || bitmaskNumber < 0) {
+		if (bitmaskNumber > 9 || bitmaskNumber < 0) {
 			Logger::console.error("Badge::hasBadge wrong badge index " + String::valueOf(badgeindex));
 
 			return false;
@@ -172,7 +181,7 @@ public:
 	}
 
 	void setBitmask(int index, uint32 bitmask) {
-		if (index > 4 || index < 0) {
+		if (index > 9 || index < 0) {
 			Logger::console.error("Badge::setBitmask wrong badge index " + String::valueOf(index));
 
 			return;
@@ -186,7 +195,7 @@ public:
 	uint32 getBitmask(int index) const {
 		uint32 res = 0;
 
-		if (index > 4 || index < 0) {
+		if (index > 9 || index < 0) {
 			Logger::console.error("Badge::getBitmask wrong badge index " + String::valueOf(index));
 
 			return res;

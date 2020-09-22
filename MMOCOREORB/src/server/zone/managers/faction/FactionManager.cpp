@@ -47,8 +47,10 @@ void FactionManager::loadLuaConfig() {
 	Lua* lua = new Lua();
 	lua->init();
 
-	//Load the faction manager lua file.
-	lua->runFile("scripts/managers/faction_manager.lua");
+	bool res = lua->runFile("custom_scripts/managers/faction_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/faction_manager.lua");
 
 	LuaObject luaObject = lua->getGlobalObject("factionList");
 

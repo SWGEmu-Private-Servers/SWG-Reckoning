@@ -46,6 +46,8 @@ include server.zone.objects.scene.variables.DeltaVector;
 include server.zone.objects.scene.variables.DeltaVectorMap;
 include server.zone.objects.scene.variables.DeltaBitArray;
 
+import server.zone.objects.player.events.SpawnProtectionRemovalTask;
+
 @json
 class PlayerObject extends IntangibleObject {
 	protected int playerLogLevel;
@@ -284,6 +286,49 @@ class PlayerObject extends IntangibleObject {
 	@rawTemplate(value = "uint32, PlayerQuestData")
 	protected DeltaVectorMap playerQuestsData;
 
+	//Ip Address
+	protected string ipAddress;
+
+	//Spawn Protection
+	@dereferenced
+	protected Time spawnProtectionTimestamp;
+	@dereferenced
+	protected transient Reference<SpawnProtectionRemovalTask> spawnProtectionTask;
+
+	//Jedi
+	protected int jediUnlockVar1;
+	protected int jediUnlockVar2;
+	protected int jediUnlockVar3;
+	protected int jediUnlockVar4;
+	protected int jediUnlockVar5;
+	protected int unlockAnnounced;
+	protected boolean preVillageJedi;
+	protected boolean pub9Check;
+
+	//TEF
+	protected boolean cityTef;
+	protected boolean opposingFactionArea;
+
+	//Player Stats
+	protected unsigned long pvpKills;
+	protected unsigned long pvpDeaths;
+	protected unsigned long bountyKills;
+	protected unsigned long pveKills;
+	protected unsigned long pveDeaths;
+	protected unsigned long missionsCompleted;
+
+	//Player Bounty
+	@dereferenced
+	protected Time playerBountyTimestamp;
+	protected unsigned long bountyPlacerId;
+	protected int bountyReward;
+
+	//Change Name
+	@dereferenced
+	protected Time firstNameTimestamp;
+	@dereferenced
+	protected Time lastNameTimestamp;
+
 	protected unsigned long miliSecsPlayed;
 	protected unsigned long miliSecsSession;
 	protected unsigned long sessionStatsMiliSecs;
@@ -399,6 +444,43 @@ class PlayerObject extends IntangibleObject {
 		lastPvpRatingUpdate.updateToCurrentTime();
 
 		tosVersionAccepted = 0;
+
+		//Ip Address
+		ipAddress = "";
+
+		//Spawn Protection
+		spawnProtectionTimestamp.updateToCurrentTime();
+
+		//Jedi
+		jediUnlockVar1 = 0;
+		jediUnlockVar2 = 0;
+		jediUnlockVar3 = 0;
+		jediUnlockVar4 = 0;
+		jediUnlockVar5 = 0;
+		unlockAnnounced = 0;
+		preVillageJedi = false;
+		pub9Check = false;
+
+		//TEF
+		cityTef = false;
+		opposingFactionArea = false;
+
+		//Player Stats
+		pvpKills = 0;
+		pvpDeaths = 0;
+		bountyKills = 0;
+		pveKills = 0;
+		pveDeaths = 0;
+		missionsCompleted = 0;
+
+		//Player Bounty
+		playerBountyTimestamp.updateToCurrentTime();
+		bountyPlacerId = 0;
+		bountyReward = 0;
+
+		//Change Name
+		firstNameTimestamp.updateToCurrentTime();
+		lastNameTimestamp.updateToCurrentTime();
 
 		miliSecsPlayed = 0;
 
@@ -1223,6 +1305,10 @@ class PlayerObject extends IntangibleObject {
 		badges.setBadge(badge);
 	}
 
+	public void unsetBadge(unsigned int badge) {
+		badges.unsetBadge(badge);
+	}
+
 	public native void awardBadge(unsigned int badge);
 
 	public void setTeleporting(boolean val) {
@@ -1736,25 +1822,22 @@ class PlayerObject extends IntangibleObject {
 	@read
 	public native Time getLastGcwCrackdownCombatActionTimestamp();
 
-	public native void updateLastCombatActionTimestamp(boolean updateGcwCrackdownAction, boolean updateGcwAction, boolean updateBhAction);
+	public native void updateLastPvpCombatActionTimestamp(boolean updateGcwCrackdownAction, boolean updateGcwAction, boolean updateBhAction, int duration = 0);
 
 	public native void updateLastBhPvpCombatActionTimestamp();
 
 	public native void updateLastGcwPvpCombatActionTimestamp();
 
-	@read
-	public native boolean hasTef();
-
-	@read
-	public native boolean hasPvpTef();
-
-	@read
-	public native boolean hasBhTef();
-
 	public native void setCrackdownTefTowards(unsigned int factionCrc, boolean scheduleTefRemovalTask = true);
 
 	@read
 	public native boolean hasCrackdownTefTowards(unsigned int factionCrc);
+
+	@read
+	public native boolean hasGcwTef();
+
+	@read
+	public native boolean hasBhTef();
 
 	@read
 	public native boolean hasCrackdownTef();
@@ -1984,6 +2067,179 @@ class PlayerObject extends IntangibleObject {
 		pvpRating = rating;
 	}
 
+	//Reckoning On Login
+	public native void reckoningOnLogin();
+
+	//Ip Address
+	public void setIpAddress(string address) {
+		ipAddress = address;
+	}
+	public string getIpAddress() {
+		return ipAddress;
+	}
+
+	//Spawn Protection
+	@dereferenced
+	@local
+	public native Time getSpawnProtectionTimestamp();
+	public native void updateSpawnProtectionTimestamp();
+	public native boolean hasSpawnProtection();
+	public native void scheduleSpawnProtectionRemovalTask(boolean removeNow = false);
+
+	//Jedi
+	public void setJediUnlockVar1(int var) {
+		jediUnlockVar1 = var;
+	}
+	public int getJediUnlockVar1() {
+		return jediUnlockVar1;
+	}
+	public void setJediUnlockVar2(int var) {
+		jediUnlockVar2 = var;
+	}
+	public int getJediUnlockVar2() {
+		return jediUnlockVar2;
+	}
+	public void setJediUnlockVar3(int var) {
+		jediUnlockVar3 = var;
+	}
+	public int getJediUnlockVar3() {
+		return jediUnlockVar3;
+	}
+	public void setJediUnlockVar4(int var) {
+		jediUnlockVar4 = var;
+	}
+	public int getJediUnlockVar4() {
+		return jediUnlockVar4;
+	}
+	public void setJediUnlockVar5(int var) {
+		jediUnlockVar5 = var;
+	}
+	public int getJediUnlockVar5() {
+		return jediUnlockVar5;
+	}
+	public void setUnlockAnnounced(int announced) {
+		unlockAnnounced = announced;
+	}
+	public int getUnlockAnnounced() {
+		return unlockAnnounced;
+	}
+	public boolean isPreVillageJedi() {
+		return preVillageJedi;
+	}
+	public void setPreVillageJedi(boolean isPreVillageJedi) {
+		preVillageJedi = isPreVillageJedi;
+	}
+
+	public boolean pub9CheckComplete() {
+		return pub9Check;
+	}
+	public void setPub9CheckComplete(boolean complete) {
+		pub9Check = complete;
+	}
+	public native int getJediUnlockVariable(int column);
+	public native void sendJediUnlockMessage();
+	public native void resetJedi();
+
+	//TEF
+	public boolean hasCityTef() {
+		return cityTef;
+	}
+	public void setHasCityTef(boolean shouldCityTef) {
+		cityTef = shouldCityTef;
+	}
+	public boolean isInOpposingArea() {
+		return opposingFactionArea;
+	}
+	public void setIsInOpposingArea(boolean factionArea) {
+		opposingFactionArea = factionArea;
+	}
+	public native boolean isPvpFlagged();
+
+	//Player Stats
+	public void updatePvpKills() {
+		pvpKills += 1;
+		updateWebStats("pvpkills", pvpKills);
+	}
+	public unsigned long getPvpKills() {
+		return pvpKills;
+	}
+	public void updatePvpDeaths() {
+		pvpDeaths += 1;
+	}
+	public unsigned long getPvpDeaths() {
+		return pvpDeaths;
+	}
+	public void updateBountyKills() {
+		bountyKills += 1;
+		updateWebStats("bountykills", bountyKills);
+	}
+	public unsigned long getBountyKills() {
+		return bountyKills;
+	}
+	public void updatePveKills() {
+		pveKills += 1;
+		updateWebStats("pvekills", pveKills);
+	}
+	public unsigned long getPveKills() {
+		return pveKills;
+	}
+	public void updatePveDeaths() {
+		pveDeaths += 1;
+	}
+	public unsigned long getPveDeaths() {
+		return pveDeaths;
+	}
+	public void updateMissionsCompleted() {
+		missionsCompleted += 1;
+		updateWebStats("missionscompleted", missionsCompleted);
+	}
+	public unsigned long getMissionsCompleted() {
+		return missionsCompleted;
+	}
+
+	public native void updateWebStats(final string stat, int newValue);
+
+	//Player Bounty
+	public void updatePlayerBountyTimestamp(int duration) {
+		playerBountyTimestamp.updateToCurrentTime();
+		playerBountyTimestamp.addMiliTime(duration);
+	}
+	public void setBountyReward(int reward) {
+		bountyReward = reward;
+	}
+	public unsigned long getBountyReward() {
+		return bountyReward;
+	}
+
+	public void setBountyPlacerId(unsigned long placerId) {
+		bountyPlacerId = placerId;
+	}
+	public unsigned long getBountyPlacerId() {
+		return bountyPlacerId;
+	}
+	public boolean hasPlayerBounty() {
+		return !playerBountyTimestamp.isPast();
+	}
+	public native void refundPlayerBountyCredits();
+
+	//Change Name
+	public void updateFirstNameTimestamp(int duration) {
+		firstNameTimestamp.updateToCurrentTime();
+		firstNameTimestamp.addMiliTime(duration);
+	}
+	public void updateLastNameTimestamp(int duration) {
+		lastNameTimestamp.updateToCurrentTime();
+		lastNameTimestamp.addMiliTime(duration);
+	}
+	public boolean hasFirstNameChangeCooldown() {
+		return !firstNameTimestamp.isPast();
+	}
+	public boolean hasLastNameChangeCooldown() {
+		return !lastNameTimestamp.isPast();
+	}
+	public native void changeFirstName(final string newFirstName);
+	public native void changeLastName(final string newLastName);
+
 	@read
 	public boolean isCloning() {
 		return isPlayerCloning;
@@ -2014,3 +2270,4 @@ class PlayerObject extends IntangibleObject {
 	@read
 	public native string getPlayedTimeString(boolean verbose = false);
 }
+

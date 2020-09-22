@@ -20,6 +20,7 @@
 #include "server/zone/objects/player/sessions/survey/SurveySession.h"
 #include "server/zone/managers/stringid/StringIdManager.h"
 
+
 ResourceSpawner::ResourceSpawner(ManagedReference<ZoneServer*> serv,
 		ZoneProcessServer* impl) {
 
@@ -364,6 +365,93 @@ bool ResourceSpawner::writeAllSpawnsToScript() {
 	return true;
 }
 
+bool ResourceSpawner::writeSpawnsToGHScript() {
+	try {
+		File* file = new File("scripts/managers/ghoutput.xml");
+
+		FileWriter* writer = new FileWriter(file);
+		writer->writeLine("<SpawnOutput>");
+		int last = 0;
+
+		for (int a = 0; a < resourceMap->size(); ++a) {
+			ManagedReference<ResourceSpawn*> spawn = resourceMap->get(a);
+
+			uint64 despawned = spawn->getDespawned();
+			uint64 currTime = System::getTime();
+			int diff = 0;
+			bool inPhase = false;
+
+			if (despawned > currTime)
+				diff = despawned - currTime;
+			else
+				diff = currTime - despawned;
+
+			if (despawned > currTime)
+				inPhase = true;
+
+			if (inPhase) {
+				for (int b = 0; b < server->getZoneCount(); ++b) {
+					Zone* zone = server->getZone(b);
+					String zoneName = zone->getZoneName();
+					ZoneResourceMap* zoneMap = resourceMap->getZoneResourceList(zoneName);
+
+					if (zone == nullptr || zoneName == "tutorial" || zoneName == "dungeon1")
+						continue;
+
+					for (int c = 0; c < zoneMap->size(); ++c) {
+						ManagedReference<ResourceSpawn*> resourceSpawn;
+						resourceSpawn = zoneMap->get(c);
+
+						if (spawn->getName() == resourceSpawn->getName()) {
+							writer->writeLine("<resource>");
+							writer->write("<SpawnName>");
+							writer->write(spawn->getName());
+							writer->writeLine("</SpawnName>");
+							writer->write("<resType>");
+
+							for (int d = 0; d < 8; ++d) {
+								String spawnClass = spawn->getClass(d);
+								if( spawnClass != "") {
+									last = d;
+									String spawnClass2 = spawn->getStfClass(d);
+								}
+							}
+
+							writer->write(spawn->getStfClass(last));
+							writer->writeLine("</resType>");
+
+							for (int e = 0; e < 12; ++e) {
+								String attribute = "";
+								int value = spawn->getAttributeAndValue(attribute, e);
+
+								if (attribute != "")
+									writer->writeLine("<attribute name=\"" + attribute + "\">" + String::valueOf(value) + "</attribute>");
+							}
+
+							writer->write("<planet>");
+							writer->write(zoneName);
+							writer->writeLine("</planet>");
+							writer->writeLine("</resource>");
+							writer->writeLine("");
+						}
+					}
+				}
+			}
+		}
+		writer->writeLine("</SpawnOutput>");
+		writer->close();
+
+		delete file;
+		delete writer;
+
+		return true;
+	} catch (Exception& e) {
+		error("Error dumping resources");
+		return false;
+	}
+	return true;
+}
+
 void ResourceSpawner::shiftResources() {
 	randomPool->update();
 	fixedPool->update();
@@ -372,6 +460,10 @@ void ResourceSpawner::shiftResources() {
 	manualPool->update();
 
 	dumpResources();
+
+	bool updateGhEnabled = ConfigManager::instance()->getUpdateGhEnabled();
+	if (updateGhEnabled)
+		dumpResourcesToGHScript();
 }
 
 ResourceSpawn* ResourceSpawner::createRecycledResourceSpawn(const ResourceTreeEntry* entry) const {
@@ -805,8 +897,8 @@ void ResourceSpawner::sendSurvey(CreatureObject* player, const String& resname) 
 		return;
 	}*/
 
-	//Adjust cost based upon player's focus
-	int mindCost = 100 - (int)(player->getHAM(CreatureAttribute::FOCUS)/15.f);
+	//Default: int mindCost = 100 - (int)(player->getHAM(CreatureAttribute::FOCUS)/15.f);
+	int mindCost = player->calculateCostAdjustment(CreatureAttribute::FOCUS, 100);
 
 	player->inflictDamage(player, CreatureAttribute::MIND, mindCost, false, true);
 
@@ -911,8 +1003,8 @@ void ResourceSpawner::sendSample(CreatureObject* player, const String& resname,
 
 	ManagedReference<PlayerObject*> ghost = player->getPlayerObject();
 
-	//Adjust cost based upon player's quickness
-	int actionCost = 124 - (int)(player->getHAM(CreatureAttribute::QUICKNESS)/12.5f);
+	//Default: int actionCost = 124 - (int)(player->getHAM(CreatureAttribute::QUICKNESS)/12.5f);
+	int actionCost = player->calculateCostAdjustment(CreatureAttribute::QUICKNESS, 200);
 
 	player->inflictDamage(player, CreatureAttribute::ACTION, actionCost, false, true);
 

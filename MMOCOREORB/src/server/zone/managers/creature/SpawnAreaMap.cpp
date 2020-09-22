@@ -35,7 +35,10 @@ void SpawnAreaMap::loadMap(Zone* z) {
 void SpawnAreaMap::loadRegions() {
 	String planetName = zone->getZoneName();
 
-	lua->runFile("scripts/managers/spawn_manager/" + planetName + "_regions.lua");
+	bool res = lua->runFile("custom_scripts/managers/spawn_manager/" + planetName + "_regions.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/spawn_manager/" + planetName + "_regions.lua");
 
 	LuaObject obj = lua->getGlobalObject(planetName + "_regions");
 

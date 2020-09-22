@@ -90,6 +90,9 @@ public:
 			if (member == nullptr || !member->isPlayerCreature())
 				continue;
 
+			if (!checkDistance(creature, member, 192))
+				continue;
+
 			if (!isValidGroupAbilityTarget(creature, member, false))
 				continue;
 

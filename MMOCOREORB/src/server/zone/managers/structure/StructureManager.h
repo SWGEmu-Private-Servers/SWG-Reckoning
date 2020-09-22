@@ -69,7 +69,7 @@ public:
 	 * post: structure deleted*
 	 * @param structure The structure that is being destroyed.
 	 */
-	int destroyStructure(StructureObject* structureObject, bool playEffect = false);
+	int destroyStructure(StructureObject* structureObject, bool playEffect = false, String reason = "");
 
 	/**
 	 * Redeeds the structure, returning it to the player in deed form with any surplus maintenance and power attached.
@@ -192,6 +192,13 @@ public:
 	bool isInStructureFootprint(StructureObject* structure, float positionX, float positionY, int extraFootprintMargin);
 
 	void promptMaintenanceDroid(StructureObject* structure, CreatureObject* creature);
+
+	int packupStructure(CreatureObject* creature);
+	void systemPackupStructure(StructureObject* structure, CreatureObject* creature);
+
+	int unpackStructureFromControlDevice(CreatureObject* creature, StructureObject* structure, float x, float y, int angle);
+	bool unpackStructure(CreatureObject* creature, StructureObject* structure, float x, float y, int angle, int persistenceLevel = 1);
+
 };
 
 #endif /*STRUCTUREMANAGER_H_*/

@@ -82,9 +82,11 @@ public:
 	const static int VEHICLECONTROLDEVICE = 0x808;
 	const static int SHIPCONTROLDEVICE = 0x80A;
 	const static int DROIDCONTROLDEVICE = 0x80B;
+	const static int STRUCTURECONTROLDEVICE = 0x80C;
+	const static int VENDORCONTROLDEVICE = 0x80D;
 
 	/// Not in client **********
-	const static int THEATEROBJECT = 0x80C;
+	const static int THEATEROBJECT = 0x80E;
 	/// End not in client ************
 
 	const static int INSTALLATION = 0x1000;
@@ -188,6 +190,9 @@ public:
 	const static int GAMBLINGTERMINAL = 0x4017;
 	const static int JUKEBOX = 0x4018;
 	const static int FLAGGAME = 0x4019;
+
+	const static int ETERMINAL = 0x4020;
+
 	const static int EVENTPERK = 0x401A;
 	const static int LOTTERYDROID = 0x401B;
 	const static int SCAVENGERCHEST = 0x401C;
@@ -334,8 +339,9 @@ public:
 	const static int CAMPAREA = 0x2000009;
 	const static int FSVILLAGEAREA = 0x200000A;
 	const static int SARLACCAREA = 0x200000B;
-
 	const static int NAVMESHAREA = 0x200000C;
+
+	const static int FACTIONALAREA = 0x200000D;
 
 	const static int SHIP = 0x20000000;
 	const static int SHIPFIGHTER = 0x20000001;

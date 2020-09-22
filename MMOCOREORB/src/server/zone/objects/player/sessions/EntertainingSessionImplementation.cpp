@@ -281,7 +281,9 @@ void EntertainingSessionImplementation::doPerformanceAction() {
 		return;
 	}
 
-	int actionDrain = performance->getActionPointsPerLoop() - (int)(entertainer->getHAM(CreatureAttribute::QUICKNESS)/35.f);
+	//int actionDrain = performance->getActionPointsPerLoop() - (int)(entertainer->getHAM(CreatureAttribute::QUICKNESS)/35.f);//SWGEmu Default
+	int actionDrain = performance->getActionPointsPerLoop();
+	actionDrain = entertainer->calculateCostAdjustment(CreatureAttribute::QUICKNESS, actionDrain);
 
 	if (entertainer->getHAM(CreatureAttribute::ACTION) <= actionDrain) {
 		if (isDancing()) {
@@ -589,12 +591,14 @@ void EntertainingSessionImplementation::doFlourish(int flourishNumber, bool gran
 		return;
 	}
 
-	float baseActionDrain = performance->getActionPointsPerLoop() - (int)(entertainer->getHAM(CreatureAttribute::QUICKNESS)/35.f);
+	//float baseActionDrain = performance->getActionPointsPerLoop() - (int)(entertainer->getHAM(CreatureAttribute::QUICKNESS)/35.f);//SWGEmu Default
+	float baseActionDrain =  performance->getActionPointsPerLoop();
 
 	//float baseActionDrain = -40 + (getQuickness() / 37.5);
 	float flourishActionDrain = baseActionDrain / 2.0;
 
 	int actionDrain = (int)round((flourishActionDrain * 10 + 0.5) / 10.0); // Round to nearest dec for actual int cost
+	actionDrain = entertainer->calculateCostAdjustment(CreatureAttribute::QUICKNESS, actionDrain);
 
 	if (entertainer->getHAM(CreatureAttribute::ACTION) <= actionDrain) {
 		entertainer->sendSystemMessage("@performance:flourish_too_tired");
@@ -632,9 +636,13 @@ void EntertainingSessionImplementation::addEntertainerBuffDuration(CreatureObjec
 
 	buffDuration += duration;
 
-	if (buffDuration > (120.0f + (10.0f / 60.0f)) ) // 2 hrs 10 seconds
-		buffDuration = (120.0f + (10.0f / 60.0f)); // 2hrs 10 seconds
-
+	if (creature->getSkillMod("private_spec_entertainer") > 0) {
+		if (buffDuration > (180.0f + (10.0f / 60.0f)))
+			buffDuration = (180.0f + (10.0f / 60.0f));
+	} else {
+		if (buffDuration > (140.0f + (10.0f / 60.0f)) ) // 2 hrs 10 seconds
+			buffDuration = (140.0f + (10.0f / 60.0f)); // 2 hrs 10 seconds
+	}
 	setEntertainerBuffDuration(creature, performanceType, buffDuration);
 }
 

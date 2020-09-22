@@ -1,0 +1,27 @@
+package server.zone.objects.area;
+
+import engine.core.ManagedObject;
+import server.zone.objects.creature.CreatureObject;
+import server.zone.objects.scene.SceneObject;
+import server.zone.objects.area.ActiveArea;
+
+class FactionalArea extends ActiveArea {
+
+	public FactionalArea() {
+		super();
+
+		super.noBuildArea = false;
+		super.noSpawnArea = false;
+	}
+	
+	@dirty
+	public native void notifyEnter(SceneObject player);
+
+	@dirty
+	public native void notifyExit(SceneObject player);
+
+	@dirty
+	public abstract boolean isFactionalArea() {
+		return true;
+	}
+}

@@ -40,6 +40,7 @@ include server.zone.managers.player.JukeboxSong;
 include server.zone.managers.player.QuestInfo;
 include server.zone.objects.player.badges.Badge;
 include system.util.Vector;
+import system.util.VectorMap;
 include system.lang.ref.Reference;
 include server.zone.managers.player.XpBonusList;
 import server.zone.ZoneClientSession;
@@ -73,18 +74,26 @@ class PlayerManager extends Observer implements Logger {
 	@dereferenced
 	protected transient Time lastOnlinePlayerLogMsg;
 
-	// Used for frog/gm buffs
-	protected int performanceBuff;
-	protected int medicalBuff;
-	protected int performanceDuration;
-	protected int medicalDuration;
+	protected int adminperformanceBuff;
+	protected int adminmedicalBuff;
+	protected int adminperformanceDuration;
+	protected int adminmedicalDuration;
+
+	protected int terminalPerformanceBuff;
+	protected int terminalMedicalBuff;
+	protected int terminalPerformanceDuration;
+	protected int terminalMedicalDuration;
+
+	protected int builderPerformanceBuff;
+	protected int builderMedicalBuff;
+	protected int builderPerformanceDuration;
+	protected int builderMedicalDuration;
 
 	protected int baseStoredCreaturePets;
 	protected int baseStoredFactionPets;
 	protected int baseStoredDroids;
 	protected int baseStoredVehicles;
 	protected int baseStoredShips;
-	protected boolean allowSameAccountPvpRatingCredit;
 	protected int onlineCharactersPerAccount;
 
 	@dereferenced
@@ -505,12 +514,11 @@ class PlayerManager extends Observer implements Logger {
 
 	public native boolean doBurstRun(CreatureObject player, float hamModifier, float cooldownModifier);
 
-	/**
-	 * Enhances the target character with doc/ent buffs
-	 * @pre { player is locked }
-	 * @post { player is locked }
-	 */
-	public native void enhanceCharacter(CreatureObject player);
+	public native void adminEnhanceCharacter(CreatureObject player);
+
+	public native void terminalEnhanceCharacter(CreatureObject player);
+
+	public native void builderEnhanceCharacter(CreatureObject player);
 
 	/**
 	 * Creates and adds buff to Player
@@ -590,4 +598,8 @@ class PlayerManager extends Observer implements Logger {
 
 	@local
 	public native void iteratePlayerNames(@dereferenced final PlayerNameIterator iterator);
+
+	public native void updatePvPKillCount(CreatureObject player);
+
+	public native void offerPlayerBounty(CreatureObject attacker, CreatureObject defender);
 }

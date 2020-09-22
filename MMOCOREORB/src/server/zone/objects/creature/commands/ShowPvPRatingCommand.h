@@ -21,6 +21,9 @@ public:
 		if (!checkInvalidLocomotions(creature))
 			return INVALIDLOCOMOTION;
 
+		creature->sendSystemMessage("Please use /showPvPStats instead of this command.");
+		return GENERALERROR;
+
 		PlayerManager* playerManager = server->getZoneServer()->getPlayerManager();
 		ManagedReference<CreatureObject*> targetObj = nullptr;
 		StringTokenizer args(arguments.toString());

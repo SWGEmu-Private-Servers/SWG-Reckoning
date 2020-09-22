@@ -43,12 +43,19 @@ public:
 
 		ManagedReference<SceneObject*> obj = suiBox->getUsingObject().get();
 
-		if (obj == nullptr || !obj->isTerminal())
+		if (obj == nullptr)
+			return;
+
+		bool isTerminal = true;
+
+		if (obj->isPlayerCreature())
+			isTerminal = false;
+		else if (!obj->isTerminal())
 			return;
 
 		Terminal* terminal = cast<Terminal*>( obj.get());
 
-		if (!terminal->isGuildTerminal())
+		if (isTerminal && !terminal->isGuildTerminal())
 			return;
 
 		GuildTerminal* guildTerminal = cast<GuildTerminal*>( terminal);
@@ -73,7 +80,10 @@ public:
 			guildManager->sendGuildKickPromptTo(player, target);
 			break;
 		case 2: //Change Permissions
-			guildManager->sendMemberPermissionsTo(player, memberID, guildTerminal);
+			if (isTerminal)
+				guildManager->sendMemberPermissionsTo(player, memberID, guildTerminal);
+			else
+				guildManager->sendMemberPermissionsTo(player, memberID, nullptr);
 			break;
 		default:
 			return;

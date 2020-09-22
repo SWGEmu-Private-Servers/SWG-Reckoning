@@ -12,16 +12,19 @@
 class FrsData : public Object {
 	int councilType;
 	int rank;
+	Time lastFrsDemotionTimestamp;
 
 public:
 	FrsData() : Object() {
 		councilType = 0;
 		rank = -1;
+		lastFrsDemotionTimestamp.updateToCurrentTime();
 	}
 
 	FrsData(const FrsData& data) : Object() {
 		councilType = data.councilType;
 		rank = data.rank;
+		lastFrsDemotionTimestamp = data.lastFrsDemotionTimestamp;
 	}
 
 	FrsData& operator=(const FrsData& data) {
@@ -61,14 +64,25 @@ public:
 		return rank;
 	}
 
+	void updateLastDemoteTimestamp(uint64 duration) {
+		lastFrsDemotionTimestamp.updateToCurrentTime();
+		lastFrsDemotionTimestamp.addMiliTime(duration);
+	}
+
+	Time getLastDemoteTimestamp() {
+		return lastFrsDemotionTimestamp;
+	}
+
 	bool toBinaryStream(ObjectOutputStream* stream) {
 		return TypeInfo<int >::toBinaryStream(&councilType, stream) &&
-				TypeInfo<int >::toBinaryStream(&rank, stream);
+				TypeInfo<int >::toBinaryStream(&rank, stream) &&
+				TypeInfo<Time >::toBinaryStream(&lastFrsDemotionTimestamp, stream);
 	}
 
 	bool parseFromBinaryStream(ObjectInputStream* stream) {
 		TypeInfo<int >::parseFromBinaryStream(&councilType, stream);
 		TypeInfo<int >::parseFromBinaryStream(&rank, stream);
+		TypeInfo<Time >::parseFromBinaryStream(&lastFrsDemotionTimestamp, stream);
 
 		return true;
 	}

@@ -45,6 +45,8 @@
 #include "server/zone/packets/scene/PlayClientEffectLocMessage.h"
 #include "server/zone/managers/gcw/sessions/ContrabandScanSession.h"
 
+#include "server/zone/objects/area/FactionalArea.h"
+
 void GCWManagerImplementation::initialize() {
 	loadLuaConfig();
 }
@@ -60,7 +62,11 @@ void GCWManagerImplementation::loadLuaConfig() {
 
 	Lua* lua = new Lua();
 	lua->init();
-	lua->runFile("scripts/managers/gcw_manager.lua");
+
+	bool res = lua->runFile("custom_scripts/managers/gcw_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/gcw_manager.lua");
 
 	gcwCheckTimer = lua->getGlobalInt("gcwCheckTimer");
 	vulnerabilityDuration = lua->getGlobalInt("vulnerabilityDuration");
@@ -416,6 +422,9 @@ bool GCWManagerImplementation::hasTooManyBasesNearby(int x, int y) {
 
 void GCWManagerImplementation::registerGCWBase(BuildingObject* building, bool initializeBase) {
 	if (!hasBase(building)) {
+		int baseType = building->getFactionBaseType();
+		if (ConfigManager::instance()->getTefEnabled() && !(building->getPvpStatusBitmask() & CreatureFlag::OVERT) && baseType == PLAYERFACTIONBASE)
+			addFactionalArea(building);
 
 		if (building->getFaction() == Factions::FACTIONIMPERIAL)
 			imperialBases++;
@@ -1636,6 +1645,24 @@ void GCWManagerImplementation::doBaseDestruction(BuildingObject* building) {
 
 			owner->sendSystemMessage(message);
 		}
+
+		if (ConfigManager::instance()->getTefEnabled()) {
+			SortedVector<ManagedReference<ActiveArea* > >* areas = building->getActiveAreas();
+			ManagedReference<ActiveArea*> area = nullptr;
+			for (int i = 0; i < areas->size(); ++i) {
+				area = areas->get(i);
+				if (area->isFactionalArea()) {
+					break;
+				}
+				area == nullptr;
+			}
+			FactionalArea* baseArea = cast<FactionalArea*>(area.get());
+
+			if (baseArea != nullptr) {
+				Locker areaLocker(baseArea);
+				baseArea->destroyObjectFromWorld(true);
+			}
+		}
 	}
 
 	unregisterGCWBase(building);
@@ -2591,6 +2618,21 @@ void GCWManagerImplementation::runCrackdownScan(AiAgent* scanner, CreatureObject
 	if (scanner->checkCooldownRecovery("crackdown_scan") && player->checkCooldownRecovery("crackdown_scan")) {
 		ContrabandScanSession* contrabandScanSession = new ContrabandScanSession(scanner, player, getWinningFaction(), getWinningFactionDifficultyScaling());
 		contrabandScanSession->initializeSession();
+	}
+}
+
+void GCWManagerImplementation::addFactionalArea(BuildingObject* building) {
+	ManagedReference<FactionalArea*> baseArea = zone->getZoneServer()->createObject(STRING_HASHCODE("object/factional_area.iff"), 0).castTo<FactionalArea*>();
+	Zone* baseZone = building->getZone();
+
+	if (baseArea != nullptr) {
+		Locker areaLocker(baseArea);
+
+		baseArea->setAreaFaction(building->getFaction());
+		baseArea->initializePosition(building->getPositionX(), building->getPositionZ(), building->getPositionY());
+		baseArea->setRadius(32.f);
+		zone->transferObject(baseArea, -1, true);
+		building->addActiveArea(baseArea);
 	}
 }
 

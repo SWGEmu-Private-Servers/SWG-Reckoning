@@ -21,6 +21,7 @@
 
 #include "server/zone/managers/object/ObjectManager.h"
 
+
 ReadWriteLock AccountManager::mutex;
 
 AccountManager::AccountManager(LoginServer* loginserv) : Logger("AccountManager") {
@@ -58,7 +59,7 @@ void AccountManager::loginAccount(LoginClient* client, Message* packet) {
 	Database::escapeString(password);
 
 	if (!isRequiredVersion(version)) {
-		client->sendErrorMessage("Login Error", "The client you are attempting to connect with does not match that required by the server.");
+		client->sendErrorMessage("Login Error", ConfigManager::instance()->getRevisionError());
 		return;
 	}
 
@@ -117,7 +118,7 @@ void AccountManager::loginApprovedAccount(LoginClient* client, ManagedReference<
 	sessionQuery << accountID << ", '" << sessionID << "', '" << ip << "' , ADDTIME(NOW(), '00:15'));";
 
 	StringBuffer logQuery;
-	logQuery << "INSERT INTO account_log (account_id, ip_address, timestamp) VALUES (" << accountID << ", '" << ip << "', NOW());";
+	logQuery << "INSERT INTO account_log (account_id, ip_address) VALUES (" << accountID << ", '" << ip << "');";
 
 	try {
 		ServerDatabase::instance()->executeStatement(sessionQuery);
@@ -146,31 +147,11 @@ Reference<Account*> AccountManager::validateAccountCredentials(LoginClient* clie
 		if (isAutoRegistrationEnabled() && client != nullptr) {
 			account = createAccount(username, password, passwordStored);
 		} else {
-			if (client != nullptr) {
-				client->sendErrorMessage("Login Error",
-					ConfigManager::instance()->getString("Core3.RegistrationMessage",
-						"Automatic registration is currently disabled. "
-						"Please contact the administrators of the server in order to get an authorized account."
-					)
-				);
-			}
+			if (client != nullptr)
+				client->sendErrorMessage("Login Error", ConfigManager::instance()->getRegisterError());
 
 			return nullptr;
 		}
-	}
-
-	if (!account->isActive()) {
-		if (client != nullptr) {
-			const String& inactTitle = ConfigManager::instance()->getInactiveAccountTitle();
-			const String& inactText = ConfigManager::instance()->getInactiveAccountText();
-
-			client->sendErrorMessage(
-				inactTitle.length() == 0 ? "Account Disabled" : inactTitle,
-				inactText.length() == 0 ? "The server administrators have disabled your account." : inactText
-			);
-		}
-
-		return nullptr;
 	}
 
 	//Check hash version
@@ -182,14 +163,22 @@ Reference<Account*> AccountManager::validateAccountCredentials(LoginClient* clie
 	}
 
 	if (passwordStored != passwordHashed) {
-		if(client != nullptr)
-			client->sendErrorMessage("Wrong Password", "The password you entered was incorrect.");
+		if (client != nullptr)
+			client->sendErrorMessage("Wrong Password", ConfigManager::instance()->getPasswordError());
 
 		return nullptr;
 	}
+
 	//update hash if unsalted
 	if (account->getSalt() == "")
 		updateHash(username, password);
+
+	if (!account->isActive()) {
+		if (client != nullptr)
+			client->sendErrorMessage("Account Disabled", ConfigManager::instance()->getActivateError());
+
+		return nullptr;
+	}
 
 	//Check if they are banned
 	if (account->isBanned()) {
@@ -296,7 +285,7 @@ Reference<Account*> AccountManager::getAccount(uint32 accountID, bool forceSqlUp
 	}
 
 	StringBuffer query;
-	query << "SELECT a.active, a.username, a.password, a.salt, a.account_id, a.station_id, UNIX_TIMESTAMP(a.created), a.admin_level FROM accounts a WHERE a.account_id = '" << accountID << "' LIMIT 1;";
+	query << "SELECT a.active, a.username, a.password, a.salt, a.account_id, a.station_id, UNIX_TIMESTAMP(a.created), a.admin_level, a.inactive_staff FROM accounts a WHERE a.account_id = '" << accountID << "' LIMIT 1;";
 
 	UniqueReference<ResultSet*> result(ServerDatabase::instance()->executeQuery(query.toString()));
 
@@ -310,6 +299,15 @@ Reference<Account*> AccountManager::getAccount(uint32 accountID, bool forceSqlUp
 		accObj->setStationID(result->getUnsignedInt(5));
 		accObj->setTimeCreated(result->getUnsignedInt(6));
 		accObj->setAdminLevel(result->getInt(7));
+		accObj->setInactiveStaff(result->getBoolean(8));
+
+		StringBuffer query1;
+		query1 << "SELECT UNIX_TIMESTAMP(timestamp) FROM account_log WHERE account_id = '" << accountID << "' ORDER BY UNIX_TIMESTAMP(timestamp) DESC LIMIT 1;";
+
+		Reference<ResultSet*> result1 = ServerDatabase::instance()->executeQuery(query1.toString());
+
+		if (result1->next())
+			accObj->setLastLogin(result1->getUnsignedInt(0));
 
 		accObj->updateFromDatabase();
 
@@ -321,7 +319,7 @@ Reference<Account*> AccountManager::getAccount(uint32 accountID, bool forceSqlUp
 
 Reference<Account*> AccountManager::getAccount(uint32 accountID, String& passwordStored, bool forceSqlUpdate) {
 	StringBuffer query;
-	query << "SELECT a.active, a.username, a.password, a.salt, a.account_id, a.station_id, UNIX_TIMESTAMP(a.created), a.admin_level FROM accounts a WHERE a.account_id = '" << accountID << "' LIMIT 1;";
+	query << "SELECT a.active, a.username, a.password, a.salt, a.account_id, a.station_id, UNIX_TIMESTAMP(a.created), a.admin_level, a.inactive_staff FROM accounts a WHERE a.account_id = '" << accountID << "' LIMIT 1;";
 
 	return getAccount(query.toString(), passwordStored, forceSqlUpdate);
 }
@@ -372,6 +370,15 @@ Reference<Account*> AccountManager::getAccount(String query, String& passwordSto
 		account->setStationID(result->getUnsignedInt(5));
 		account->setTimeCreated(result->getUnsignedInt(6));
 		account->setAdminLevel(result->getInt(7));
+		account->setInactiveStaff(result->getBoolean(8));
+
+		StringBuffer query1;
+		query1 << "SELECT UNIX_TIMESTAMP(timestamp) FROM account_log WHERE account_id = '" << accountID << "' ORDER BY UNIX_TIMESTAMP(timestamp) DESC LIMIT 1;";
+
+		Reference<ResultSet*> result1 = ServerDatabase::instance()->executeQuery(query1.toString());
+
+		if (result1->next())
+			account->setLastLogin(result1->getUnsignedInt(0));
 
 		account->updateFromDatabase();
 

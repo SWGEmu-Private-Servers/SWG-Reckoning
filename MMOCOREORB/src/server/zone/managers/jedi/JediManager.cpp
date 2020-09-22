@@ -45,16 +45,24 @@ void JediManager::setupLuaValues(Lua* luaEngine) {
 void JediManager::loadConfiguration(Lua* luaEngine) {
 	setupLuaValues(luaEngine);
 
-	luaEngine->runFile("scripts/managers/jedi/jedi_manager.lua");
+	bool res = luaEngine->runFile("custom_scripts/managers/jedi/jedi_manager.lua");
+	if (!res)
+		res = luaEngine->runFile("scripts/managers/jedi/jedi_manager.lua");
 
 	jediProgressionType = luaEngine->getGlobalInt(String("jediProgressionType"));
 
+	bool res1;
+
 	switch (jediProgressionType) {
 	case HOLOGRINDJEDIPROGRESSION:
-		luaEngine->runFile("scripts/managers/jedi/hologrind_jedi_manager.lua");
+		res1 = luaEngine->runFile("custom_scripts/managers/jedi/hologrind_jedi_manager.lua");
+		if (!res1)
+			luaEngine->runFile("scripts/managers/jedi/hologrind_jedi_manager.lua");
 		break;
 	case VILLAGEJEDIPROGRESSION:
-		luaEngine->runFile("scripts/managers/jedi/village_jedi_manager.lua");
+		res1 = luaEngine->runFile("custom_scripts/managers/jedi/village_jedi_manager.lua");
+		if (!res1)
+			luaEngine->runFile("scripts/managers/jedi/village_jedi_manager.lua");
 		break;
 	case CUSTOMJEDIPROGRESSION:
 		luaEngine->runFile(luaEngine->getGlobalString("customJediProgressionFile"));
@@ -158,6 +166,14 @@ void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& bran
 	Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "onFSTreeCompleted", 0);
 	*luaStartTask << creature;
 	*luaStartTask << branch;
+
+	luaStartTask->callFunction();
+}
+
+void JediManager::onFsSkillLearned(CreatureObject* creature) {
+	Lua* lua = DirectorManager::instance()->getLuaInstance();
+	Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "onFsSkillLearned", 0);
+	*luaStartTask << creature;
 
 	luaStartTask->callFunction();
 }

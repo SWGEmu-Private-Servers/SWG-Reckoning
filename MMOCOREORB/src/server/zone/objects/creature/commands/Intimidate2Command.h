@@ -8,6 +8,8 @@
 #include "server/zone/packets/object/CombatSpam.h"
 #include "CombatQueueCommand.h"
 
+#include "server/zone/objects/tangible/weapon/WeaponObject.h"
+
 class Intimidate2Command : public CombatQueueCommand {
 public:
 
@@ -22,6 +24,11 @@ public:
 
 		if (!checkInvalidLocomotions(creature))
 			return INVALIDLOCOMOTION;
+
+		ManagedReference<WeaponObject*> weapon = creature->getWeapon();
+
+		if (weapon != nullptr && weapon->isJediWeapon())
+			return INVALIDWEAPON;
 
 		Reference<TangibleObject*> targetObject = server->getZoneServer()->getObject(target).castTo<TangibleObject*>();
 

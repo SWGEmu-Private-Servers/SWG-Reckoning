@@ -72,7 +72,10 @@ void GuildManagerImplementation::loadLuaConfig() {
 	Lua* lua = new Lua();
 	lua->init();
 
-	lua->runFile("scripts/managers/guild_manager.lua");
+	bool res = lua->runFile("custom_scripts/managers/guild_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/guild_manager.lua");
 
 	guildUpdateInterval = lua->getGlobalInt("GuildUpdateInterval");
 	requiredMembers = lua->getGlobalInt("RequiredMembers");
@@ -1069,9 +1072,15 @@ void GuildManagerImplementation::sendGuildMemberListTo(CreatureObject* player, G
 	ManagedReference<SuiListBox*> suiBox = new SuiListBox(player, SuiWindowType::GUILD_MEMBER_LIST);
 	suiBox->setCallback(new GuildMemberListSuiCallback(server));
 	suiBox->setPromptTitle("@guild:members_title"); // Guild Members
-	suiBox->setPromptText("@guild:members_prompt"); // These are the current members of the guild. To perform an operation on a guild member, select them in the list and press Ok.
-	suiBox->setUsingObject(guildTerminal);
-	suiBox->setForceCloseDistance(32);
+	suiBox->setPromptText("@guild:members_prompt");
+
+	if (guildTerminal != nullptr){
+		suiBox->setUsingObject(guildTerminal);
+		suiBox->setForceCloseDistance(32);
+	} else {
+		suiBox->setUsingObject(player);
+		suiBox->setForceCloseDisabled();
+	}
 
 	GuildMemberList* memberList = guild->getGuildMemberList();
 
@@ -1088,7 +1097,22 @@ void GuildManagerImplementation::sendGuildMemberListTo(CreatureObject* player, G
 			continue;
 
 		CreatureObject* member = cast<CreatureObject*>( obj.get());
-		suiBox->addMenuItem(member->getDisplayedName(), playerID);
+		PlayerObject* ghost = member->getPlayerObject();
+		StringBuffer memberString;
+		String position;
+
+		if (guild->getGuildLeaderID() == playerID)
+			position = "[Leader]";
+		else
+			position = "[Member]";
+
+		if (member->isOnline()) {
+			memberString << member->getDisplayedName() << " | " << position << " | " << "\\#00DD00[Online]";
+		} else {
+			memberString << member->getDisplayedName() << " | " << position << " | " << "\\#DD0000[Offline for " << ghost->getDaysSinceLastLogout() << " days.]";
+		}
+
+		suiBox->addMenuItem(memberString.toString(), playerID);
 	}
 
 	suiBox->setCancelButton(true, "@cancel");
@@ -1120,9 +1144,15 @@ void GuildManagerImplementation::sendGuildMemberOptionsTo(CreatureObject* player
 	text = text.replaceFirst("%TU", playObj->getDisplayedName());
 
 	suiBox->setPromptText(text.toString());
-	suiBox->setUsingObject(guildTerminal);
-	suiBox->setForceCloseDistance(32);
 	suiBox->setCancelButton(true, "@cancel");
+
+	if (guildTerminal != nullptr){
+		suiBox->setUsingObject(guildTerminal);
+		suiBox->setForceCloseDistance(32);
+	} else {
+		suiBox->setUsingObject(player);
+		suiBox->setForceCloseDisabled();
+	}
 
 	suiBox->addMenuItem("@guild:title", memberID); // Set Title
 	suiBox->addMenuItem("@guild:kick", memberID); // Kick
@@ -1150,8 +1180,7 @@ void GuildManagerImplementation::sendGuildSetTitleTo(CreatureObject* player, Cre
 	text = text.replaceFirst("%TU", target->getDisplayedName());
 
 	suiBox->setPromptText(text.toString());
-	suiBox->setUsingObject(target);
-	suiBox->setForceCloseDistance(32);
+	suiBox->setUsingObject(player);
 	suiBox->setMaxInputSize(24);
 	suiBox->setCancelButton(true, "@cancel");
 
@@ -1325,9 +1354,15 @@ void GuildManagerImplementation::sendMemberPermissionsTo(CreatureObject* player,
 	text = text.replaceFirst("%TU", target->getDisplayedName());
 
 	listBox->setPromptText(text.toString());
-	listBox->setUsingObject(guildTerminal);
-	listBox->setForceCloseDistance(32);
 	listBox->setCancelButton(true, "@cancel");
+
+	if (guildTerminal != nullptr){
+		listBox->setUsingObject(guildTerminal);
+		listBox->setForceCloseDistance(32);
+	} else {
+		listBox->setUsingObject(player);
+		listBox->setForceCloseDisabled();
+	}
 
 	listBox->addMenuItem(String("@guild:permission_mail_") + (guild->hasMailPermission(targetID) ? "yes" : "no"), targetID);
 	listBox->addMenuItem(String("@guild:permission_sponsor_") + (guild->hasSponsorPermission(targetID) ? "yes" : "no"), targetID);
@@ -1386,7 +1421,10 @@ void GuildManagerImplementation::toggleGuildPermission(CreatureObject* player, u
 	}
 
 	//Resend the permissions sui
-	sendMemberPermissionsTo(player, targetID, guildTerminal);
+	if (guildTerminal != nullptr)
+		sendMemberPermissionsTo(player, targetID, guildTerminal);
+	else
+		sendMemberPermissionsTo(player, targetID, nullptr);
 }
 
 void GuildManagerImplementation::sendGuildSponsorTo(CreatureObject* player, GuildObject* guild, GuildTerminal* guildTerminal) {

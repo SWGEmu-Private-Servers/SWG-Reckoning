@@ -38,6 +38,8 @@
 #include "templates/tangible/SharedStructureObjectTemplate.h"
 #include "server/zone/objects/player/sui/callbacks/RenameCitySuiCallback.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include "templates/faction/Factions.h"
+
 
 #ifndef CITY_DEBUG
 #define CITY_DEBUG
@@ -61,13 +63,19 @@ int CityManagerImplementation::trainersPerRank = 3;
 int CityManagerImplementation::missionTerminalsPerRank = 3;
 float CityManagerImplementation::maintenanceDiscount = 1.0f;
 
+int CityManagerImplementation::bazaarRankRequired  = 3;
+int CityManagerImplementation::maxBazaarTerminals = 0;
+
 void CityManagerImplementation::loadLuaConfig() {
 	info("Loading configuration file.", true);
 
 	Lua* lua = new Lua();
 	lua->init();
 
-	lua->runFile("scripts/managers/city_manager.lua");
+	bool res = lua->runFile("custom_scripts/managers/city_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/city_manager.lua");
 
 	LuaObject luaObject = lua->getGlobalObject("CitiesAllowed");
 
@@ -123,6 +131,9 @@ void CityManagerImplementation::loadLuaConfig() {
 	trainersPerRank = lua->getGlobalInt("TrainersPerRank");
 	missionTerminalsPerRank = lua->getGlobalInt("MissionTerminalsPerRank");
 	maintenanceDiscount = lua->getGlobalFloat("maintenanceDiscount");
+
+	bazaarRankRequired = lua->getGlobalInt("bazaarRankRequired");
+	maxBazaarTerminals = lua->getGlobalInt("maxBazaarTerminals");
 
 	luaObject = lua->getGlobalObject("CitizensPerRank");
 
@@ -209,6 +220,7 @@ CityRegion* CityManagerImplementation::createCity(CreatureObject* mayor, const S
 	city->setAssessmentPending(true);
 	city->scheduleCitizenAssessment(newCityGracePeriod * 60);
 	city->rescheduleUpdateEvent(cityUpdateInterval * 60); //Minutes
+	city->setFactionAlignment(0);
 
 	StringIdChatParameter params("city/city", "new_city_body");
 	params.setTO(mayor->getObjectID());
@@ -735,6 +747,16 @@ void CityManagerImplementation::assessCitizens(CityRegion* city) {
 void CityManagerImplementation::processCityUpdate(CityRegion* city) {
 	info("Processing city update: " + city->getRegionName(), true);
 
+	Zone* zone = city->getZone();
+
+	if (zone == nullptr)
+		return;
+
+	PlanetManager* planetManager = zone->getPlanetManager();
+
+	if (planetManager == nullptr)
+		return;
+
 	ManagedReference<StructureObject*> ch = city->getCityHall();
 
 	if (ch == nullptr) {
@@ -751,19 +773,20 @@ void CityManagerImplementation::processCityUpdate(CityRegion* city) {
 		if (cityRank == CLIENT)
 			return; //It's a client region.
 
+		ManagedReference<CreatureObject*> mayor = zoneServer->getObject(city->getMayorID()).castTo<CreatureObject*>();
+
+		if (mayor == nullptr || !mayor->isPlayerCreature())
+			return;
+
 		radius = city->getRadius();
 
 		city->cleanupCitizens();
 
-		ManagedReference<SceneObject*> mayor = zoneServer->getObject(city->getMayorID());
+		Reference<PlayerObject*> ghost = mayor->getSlottedObject("ghost").castTo<PlayerObject*> ();
 
-		if (mayor != nullptr && mayor->isPlayerCreature()) {
-			Reference<PlayerObject*> ghost = mayor->getSlottedObject("ghost").castTo<PlayerObject*> ();
+		if (ghost != nullptr)
+			ghost->addExperience("political", 750, true);
 
-			if (ghost != nullptr) {
-				ghost->addExperience("political", 750, true);
-			}
-		}
 		updateCityVoting(city);
 
 		int citizens = city->getCitizenCount();
@@ -782,6 +805,46 @@ void CityManagerImplementation::processCityUpdate(CityRegion* city) {
 				expandCity(city);
 			} else {
 				city->destroyAllStructuresForRank(uint8(cityRank + 1), true);
+			}
+		}
+
+		if (ConfigManager::instance()->getTefEnabled() && ConfigManager::instance()->getCityTefEnabled()) {
+			if (city->getFactionAlignment() != Factions::FACTIONNEUTRAL && cityRank < ConfigManager::instance()->getCityAlignRankReq()) {
+				for (int i = city->getDecorationCount() - 1; i >= 0; i--) {
+					ManagedReference<TangibleObject*> decoration = cast<TangibleObject*>(city->getCityDecoration(i));
+
+					if (decoration == nullptr)
+						continue;
+
+					if (decoration->isCityImperialSign() || decoration->isCityRebelSign()) {
+						decoration->destroyObjectFromWorld(true);
+						decoration->destroyObjectFromDatabase(true);
+					}
+				}
+
+				String oldName = city->getRegionName();
+				city->setFactionAlignment(0);
+
+				bool wasRegistered = false;
+
+				if (city->isRegistered()) {
+					unregisterCity(city, mayor);
+					wasRegistered = true;
+				}
+
+				if (city->hasShuttleInstallation()) {
+					Reference<PlanetTravelPoint*> tp = planetManager->getPlanetTravelPoint(oldName);
+
+					if (tp != nullptr) {
+						Reference<PlanetTravelPoint*> newTP = tp;
+						newTP->setPointName(city->getRegionName());
+						planetManager->removePlayerCityTravelPoint(oldName);
+						planetManager->addPlayerCityTravelPoint(newTP);
+					}
+				}
+
+				if (wasRegistered)
+					registerCity(city, mayor);
 			}
 		}
 
@@ -1148,7 +1211,7 @@ void CityManagerImplementation::updateCityVoting(CityRegion* city, bool override
 			Reference<PlayerObject*> ghost = mayorObject->getSlottedObject("ghost").castTo<PlayerObject*>();
 
 			if (ghost != nullptr) {
-				ghost->addExperience("political", votes * 300, true);
+				ghost->addExperience("political", votes * 500, true);
 			}
 
 			if (votes > topVotes || (votes == topVotes && candidateID == incumbentID)) {
@@ -1250,6 +1313,11 @@ void CityManagerImplementation::contractCity(CityRegion* city) {
 		startedAssessment = true;
 		city->setAssessmentPending(true);
 		city->scheduleCitizenAssessment(oldCityGracePeriod * 60);
+	}
+
+	if (city->getCitySpecialization() == "@city/city:city_spec_master_healing" || city->getCitySpecialization() == "@city/city:city_spec_master_manufacturing") {
+		if (newRank < METROPOLIS)
+			city->setCitySpecialization("");
 	}
 
 	if (newRank < TOWNSHIP) {
@@ -1429,6 +1497,20 @@ void CityManagerImplementation::unregisterCitizen(CityRegion* city, CreatureObje
 		UnicodeString subject = "@city/city:lost_city_citizen_subject"; // Lost Citizen!
 
 		chatManager->sendMail("@city/city:new_city_from", subject, params, mayorCreature->getFirstName(), nullptr);
+	}
+
+	int maintainCitizens = citizensPerRank.get(city->getCityRank() - 1);
+
+	if (city->getCitizenCount() < maintainCitizens) {
+		if (mayor != nullptr && mayor->isPlayerCreature()) {
+			CreatureObject* mayorCreature = cast<CreatureObject*> (mayor.get());
+
+			StringIdChatParameter params("city/city", "Your City no longer meets the required citizen population for its current rank. If this is not corrected, the city will contract on the next city update.");
+			params.setTO(creature->getDisplayedName());
+			UnicodeString subject = "City Citizenship Requirements No Longer Met";
+
+			chatManager->sendMail("@city/city:new_city_from", subject, params, mayorCreature->getFirstName(), nullptr);
+		}
 	}
 
 	city->removeCitizen(creature->getObjectID());
@@ -2322,6 +2404,19 @@ bool CityManagerImplementation::canSupportMoreMissionTerminals(CityRegion* city)
 	return city->getMissionTerminalCount() < (missionTerminalsPerRank * city->getCityRank());
 }
 
+bool CityManagerImplementation::canSupportMoreBazaarTerminals(CityRegion* city) {
+	if (city == nullptr)
+		return false;
+
+	if (maxBazaarTerminals == 0)
+		return false;
+
+	if (city->getCityRank() < bazaarRankRequired)
+		return false;
+
+	return city->getBazaarTerminalCount() < maxBazaarTerminals;
+}
+
 void CityManagerImplementation::sendChangeCityName(CityRegion* city, CreatureObject* mayor){
 	PlayerObject* ghost = mayor->getPlayerObject();
 
@@ -2457,4 +2552,118 @@ void CityManagerImplementation::alignAmenity(CityRegion* city, CreatureObject* p
 		return;
 
 	amenity->updateDirection(Math::deg2rad(90 * direction));
+}
+
+void CityManagerImplementation::setFactionAlignment(CityRegion* city, CreatureObject* mayor) {
+	PlayerObject* ghost = mayor->getPlayerObject();
+
+	if (ghost == nullptr)
+		return;
+
+	Zone* zone = city->getZone();
+
+	if (zone == nullptr)
+		return;
+
+	PlanetManager* planetManager = zone->getPlanetManager();
+
+	if (planetManager == nullptr)
+		return;
+
+	Locker clocker(city, mayor);
+
+	if (!ghost->isStaff() && !city->isMayor(mayor->getObjectID())) {
+		return;
+	}
+
+	int cityAlignRankReq = ConfigManager::instance()->getCityAlignRankReq();
+	unsigned int mayorAlignment = mayor->getFaction();
+	unsigned int cityAlignment = city->getFactionAlignment();
+
+	if (mayorAlignment == cityAlignment) {
+		mayor->sendSystemMessage("The city is already aligned with your faction, or it's already neutral.");
+		return;
+	}
+
+	if (city->getCityRank() < cityAlignRankReq && mayorAlignment != Factions::FACTIONNEUTRAL) {
+		mayor->sendSystemMessage("The city rank is too low to align with a faction.");
+		return;
+	}
+
+	for (int i = city->getDecorationCount() - 1; i >= 0; i--) {
+		ManagedReference<TangibleObject*> decoration = cast<TangibleObject*>(city->getCityDecoration(i));
+
+		if (decoration == nullptr)
+			continue;
+
+		float decorationX = decoration->getWorldPositionX();
+		float decorationZ = decoration->getWorldPositionZ();
+		float decorationY = decoration->getWorldPositionY();
+		float decorationD = decoration->getDirectionAngle();
+
+		if (mayorAlignment == Factions::FACTIONNEUTRAL && (decoration->isCityImperialSign() || decoration->isCityRebelSign())) {
+			city->removeDecoration(decoration);
+			decoration->destroyObjectFromWorld(true);
+			decoration->destroyObjectFromDatabase(true);
+		} else if (mayorAlignment == Factions::FACTIONIMPERIAL && decoration->isCityRebelSign()) {
+			city->removeDecoration(decoration);
+			decoration->destroyObjectFromWorld(true);
+			decoration->destroyObjectFromDatabase(true);
+
+			String newSignTemplate = "object/tangible/furniture/city/imperial_control_sign.iff";
+			ManagedReference<TangibleObject*> newSign = (zoneServer->createObject(newSignTemplate.hashCode(), 1)).castTo<TangibleObject*>();
+
+			if (newSign == nullptr)
+				continue;
+
+			newSign->initializePosition(decorationX, decorationZ, decorationY);
+			newSign->rotate(decorationD);
+
+			if (zone->transferObject(newSign, -1, true)) {
+				city->addDecoration(newSign);
+			}
+		} else if (mayorAlignment == Factions::FACTIONREBEL && decoration->isCityImperialSign()) {
+			city->removeDecoration(decoration);
+			decoration->destroyObjectFromWorld(true);
+			decoration->destroyObjectFromDatabase(true);
+
+			String newSignTemplate = "object/tangible/furniture/city/rebel_control_sign.iff";
+			ManagedReference<TangibleObject*> newSign = (zoneServer->createObject(newSignTemplate.hashCode(), 1)).castTo<TangibleObject*>();
+
+			if (newSign == nullptr)
+				continue;
+
+			newSign->initializePosition(decorationX, decorationZ, decorationY);
+			newSign->rotate(decorationD);
+
+			if (zone->transferObject(newSign, -1, true)) {
+				city->addDecoration(newSign);
+			}
+		}
+	}
+
+	String oldName = city->getRegionName();
+	city->setFactionAlignment(mayor->getFaction());
+	mayor->sendSystemMessage("You have aligned your city with your faction, or set it's alignment neutral.");
+
+	bool wasRegistered = false;
+
+	if (city->isRegistered()) {
+		unregisterCity(city, mayor);
+		wasRegistered = true;
+	}
+
+	if (city->hasShuttleInstallation()) {
+		Reference<PlanetTravelPoint*> tp = planetManager->getPlanetTravelPoint(oldName);
+
+		if (tp != nullptr) {
+			Reference<PlanetTravelPoint*> newTP = tp;
+			newTP->setPointName(city->getRegionName());
+			planetManager->removePlayerCityTravelPoint(oldName);
+			planetManager->addPlayerCityTravelPoint(newTP);
+		}
+	}
+
+	if (wasRegistered)
+		registerCity(city, mayor);
 }

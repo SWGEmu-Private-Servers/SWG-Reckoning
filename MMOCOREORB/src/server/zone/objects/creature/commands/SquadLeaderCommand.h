@@ -11,6 +11,7 @@
 #include "CombatQueueCommand.h"
 #include "server/zone/objects/group/GroupObject.h"
 
+
 class SquadLeaderCommand : public CombatQueueCommand {
 protected:
 	String action;
@@ -74,32 +75,41 @@ public:
 		if (leader->getZone() != target->getZone())
 			return false;
 
+		if (target->getParentRecursively(SceneObjectType::BUILDING) != leader->getParentRecursively(SceneObjectType::BUILDING))
+			return false;
+
 		CreatureObject* targetCreo = target;
 
 		if (allowPet && target->isPet())
 			targetCreo = target->getLinkedCreature().get();
 
-		PlayerObject* ghost = targetCreo->getPlayerObject();
-		if (ghost == nullptr || ghost->hasBhTef())
+		PlayerObject* ghost = leader->getPlayerObject();
+		PlayerObject* targetGhost = targetCreo->getPlayerObject();
+		if (ghost == nullptr || targetGhost == nullptr || ghost->hasBhTef())
 			return false;
 
 		uint32 leaderFaction = leader->getFaction();
 		uint32 targetFaction = target->getFaction();
 		int targetStatus = targetCreo->getFactionStatus();
 
-		if (leaderFaction == 0) {
-			if (targetFaction != 0 && targetStatus > FactionStatus::ONLEAVE)
+		if (ConfigManager::instance()->getTefEnabled()) {
+			if (targetGhost->isPvpFlagged() && (leaderFaction == 0 || leaderFaction != targetFaction))
 				return false;
-		} else if (targetFaction != 0) {
-			if (leaderFaction != targetFaction && targetStatus > FactionStatus::ONLEAVE)
-				return false;
+		} else {
+			if (leaderFaction == 0) {
+				if (targetFaction != 0 && targetStatus > FactionStatus::ONLEAVE)
+					return false;
+			} else if (targetFaction != 0) {
+				if (leaderFaction != targetFaction && targetStatus > FactionStatus::ONLEAVE)
+					return false;
 
-			if (leaderFaction == targetFaction && targetStatus > leader->getFactionStatus())
-				return false;
+				if (leaderFaction == targetFaction && targetStatus > leader->getFactionStatus())
+					return false;
+			}
 		}
 
-		if (target->getParentRecursively(SceneObjectType::BUILDING) != leader->getParentRecursively(SceneObjectType::BUILDING))
-			return false;
+		if (targetGhost->hasBhTef())
+ 			return false;
 
 		return true;
 	}

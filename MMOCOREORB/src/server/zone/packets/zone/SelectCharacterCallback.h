@@ -42,6 +42,12 @@ public:
 			return;
 		}
 
+		if (ghost->getAdminLevel() == 0 && zoneServer->isServerLocked()) {
+			ErrorMessage* errMsg = new ErrorMessage("Login Error", "Server is currently locked", 0);
+			client->sendMessage(errMsg);
+			return;
+		}
+
 		if (ghost->getAdminLevel() == 0 && (zoneServer->getConnectionCount() >= zoneServer->getServerCap())) {
 			client->sendMessage(new ErrorMessage("Login Error", "Server cap reached, please try again later", 0));
 			return;
@@ -284,3 +290,4 @@ public:
 
 
 #endif /* SELECTCHARACTERCALLBACK_H_ */
+

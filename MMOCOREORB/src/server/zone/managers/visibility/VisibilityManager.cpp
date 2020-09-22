@@ -14,6 +14,8 @@ const String VisibilityManager::factionStringImperial = "imperial";
 const unsigned int VisibilityManager::factionRebel = STRING_HASHCODE("rebel");
 const unsigned int VisibilityManager::factionImperial = STRING_HASHCODE("imperial");
 
+#include "server/zone/objects/group/GroupObject.h"
+
 float VisibilityManager::calculateVisibilityIncrease(CreatureObject* creature) {
 	Zone* zone = creature->getZone();
 
@@ -42,7 +44,7 @@ float VisibilityManager::calculateVisibilityIncrease(CreatureObject* creature) {
 
 		CreatureObject* c = obj->asCreatureObject();
 
-		if (c == nullptr || (!c->isNonPlayerCreatureObject() && !c->isPlayerCreature()))
+		if (c == nullptr || (!c->isNonPlayerCreatureObject() && !c->isHumanoid() && !c->isPlayerCreature()))
 			continue;
 
 		if (c->isDead() || c->isIncapacitated() || (c->isPlayerCreature() && c->getPlayerObject()->hasGodMode()))
@@ -51,15 +53,19 @@ float VisibilityManager::calculateVisibilityIncrease(CreatureObject* creature) {
 		if (!creature->isInRange(c, 32) || !CollisionManager::checkLineOfSight(creature, c))
 			continue;
 
+		ManagedReference<GroupObject*> group = creature->getGroup();
+		if (c->isPlayerCreature() && group != nullptr && group->hasMember(c))
+			continue;
+
 		if (creature->getFaction() == 0 || (c->getFaction() != factionImperial && c->getFaction() != factionRebel)) {
-			visibilityIncrease += 0.5;
+			visibilityIncrease += 1;
 			//info(c->getCreatureName().toString() + " generating a 0.5 visibility modifier", true);
 		} else {
 			if (creature->getFaction() == c->getFaction()) {
-				visibilityIncrease += 0.25;
+				visibilityIncrease += 0.5;
 				//info(c->getCreatureName().toString() + " generating a 0.25 visibility modifier", true);
 			} else {
-				visibilityIncrease += 1;
+				visibilityIncrease += 2;
 				//info( c->getCreatureName().toString() + " generating a 1.0 visibility modifier", true);
 			}
 		}
@@ -181,7 +187,9 @@ void VisibilityManager::loadConfiguration() {
 		Lua* lua = new Lua();
 		lua->init();
 
-		lua->runFile("scripts/managers/jedi/visibility_manager.lua");
+		bool res = lua->runFile("custom_scripts/managers/jedi/visibility_manager.lua");
+		if (!res)
+			res = lua->runFile("scripts/managers/jedi/visibility_manager.lua");
 
 		maxVisibility  = (float)lua->getGlobalInt(String("maxVisibility"));
 		terminalVisThreshold = (float)lua->getGlobalInt(String("termThreshold"));

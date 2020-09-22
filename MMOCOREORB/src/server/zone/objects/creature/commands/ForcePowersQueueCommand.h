@@ -107,13 +107,44 @@ public:
 		return forceCost + (int)((manipulationMod * frsModifier) + .5);
 	}
 
-	float getCommandDuration(CreatureObject *object, const UnicodeString& arguments) const {
-		float combatHaste = object->getSkillMod("combat_haste");
+	float getModifiedSpeed(CreatureObject* creature) const {
+		float combatHaste = creature->getSkillMod("combat_haste");
+		float modifiedSpeed = speed;
 
 		if (combatHaste > 0)
-			return speed * (1.f - (combatHaste / 100.f));
-		else
-			return speed;
+			modifiedSpeed *= (1.f - (combatHaste / 100.f));
+
+		ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
+
+		if (ghost == nullptr)
+			return modifiedSpeed;
+
+		Locker locker(creature);
+
+		FrsData* playerData = ghost->getFrsData();
+		int councilType = playerData->getCouncilType();
+
+		locker.release();
+
+		int controlMod = 0;
+		float frsModifier = 0;
+
+		if (councilType == FrsManager::COUNCIL_LIGHT) {
+			controlMod = creature->getSkillMod("force_control_light");
+			frsModifier = frsLightSpeedModifier;
+		} else if (councilType == FrsManager::COUNCIL_DARK) {
+			controlMod = creature->getSkillMod("force_control_dark");
+			frsModifier = frsDarkSpeedModifier;
+		}
+
+		if (controlMod == 0 || frsModifier == 0)
+			return modifiedSpeed;
+
+		return modifiedSpeed + ((float)controlMod * frsModifier);
+	}
+
+	float getCommandDuration(CreatureObject *object, const UnicodeString& arguments) const {
+		return getModifiedSpeed(object);
 	}
 
 	virtual bool isJediCombatQueueCommand() {

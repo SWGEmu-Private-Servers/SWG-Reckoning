@@ -103,7 +103,8 @@ void SurveySessionImplementation::startSurvey(const String& resname) {
 	}
 
 	//Get actual cost based upon player's Focus
-	int mindCost = 100 - (int)(surveyer->getHAM(CreatureAttribute::FOCUS)/15.f);
+	//Default: int mindCost = 100 - (int)(surveyer->getHAM(CreatureAttribute::FOCUS)/15.f);//SWGEmu Default
+	int mindCost = surveyer->calculateCostAdjustment(CreatureAttribute::FOCUS, 100);
 
 	if (surveyer->getHAM(CreatureAttribute::MIND) < mindCost) {
 		surveyer->setPosture(CreaturePosture::UPRIGHT, true);
@@ -192,7 +193,8 @@ void SurveySessionImplementation::startSample(const String& resname) {
 	}
 
 	//Get actual cost based upon player's Quickness
-	int actionCost = 124 - (int)(surveyer->getHAM(CreatureAttribute::QUICKNESS)/12.5f);
+	//Default: int actionCost = 124 - (int)(surveyer->getHAM(CreatureAttribute::QUICKNESS)/12.5f);//SWGEmu Default
+	int actionCost = surveyer->calculateCostAdjustment(CreatureAttribute::QUICKNESS, 200);
 
 	if (surveyer->getHAM(CreatureAttribute::ACTION) < actionCost) {
 		surveyer->setPosture(CreaturePosture::UPRIGHT, true);

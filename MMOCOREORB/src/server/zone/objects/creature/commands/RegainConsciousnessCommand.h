@@ -29,7 +29,17 @@ public:
 			if(res != SUCCESS)
 				return res;
 
-			doForceCost(creature);
+			//Check for Force Cost.
+			ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
+
+			if (ghost != nullptr && ghost->getForcePower() < forceCost) {
+				creature->sendSystemMessage("@jedi_spam:no_force_power"); //"You do not have enough Force Power to perform that action.
+				return GENERALERROR;
+			}
+
+			// Force Cost.
+			if (ghost != nullptr)
+				ghost->setForcePower(ghost->getForcePower() - forceCost);
 
 			// Cut Force Regen in Half for 30 Minutes.
 			ManagedReference<PrivateSkillMultiplierBuff *> regenDebuff = new PrivateSkillMultiplierBuff(creature, STRING_HASHCODE("private_force_regen_debuff"), 60*30, BuffType::JEDI);

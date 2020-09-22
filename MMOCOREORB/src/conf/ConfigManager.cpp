@@ -30,9 +30,13 @@ bool ConfigManager::loadConfigData() {
 
 	configStartTime.start();
 
-	if (!lua.runFile("conf/config.lua")) {
-		fatal("ConfigManager failed to parse conf/config.lua");
-		return false;
+	if (!lua.runFile("custom_scripts/conf/config.lua")) {
+		info("ConfigManager failed to parse custom_scripts/conf/config.lua. Using SWGEmu default config.", true);
+
+		if (!lua.runFile("conf/config.lua")) {
+			error("ConfigManager failed to parse conf/config.lua");
+			return false;
+		}
 	}
 
 	File file("conf/config-local.lua");
@@ -76,8 +80,15 @@ bool ConfigManager::loadConfigData() {
 
 	lua_pop(L, 1);
 
-	// Load file based strings into config
-	setStringFromFile("Core3.MOTD", "conf/motd.txt");
+  	File* motd = new File("custom_scripts/conf/motd.txt");
+
+	if (motd->exists())
+		setStringFromFile("Core3.MOTD", "custom_scripts/conf/motd.txt");
+	else
+		setStringFromFile("Core3.MOTD", "conf/motd.txt");
+
+	delete motd;
+
 	setStringFromFile("Core3.Revision", "conf/rev.txt");
 
 #ifdef DEBUG_CONFIGMANAGER

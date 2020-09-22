@@ -79,6 +79,11 @@ Luna<LuaPlayerObject>::RegType LuaPlayerObject::Register[] = {
 		{ "setFrsRank", &LuaPlayerObject::setFrsRank },
 		{ "getFrsRank", &LuaPlayerObject::getFrsRank },
 		{ "getFrsCouncil", &LuaPlayerObject::getFrsCouncil },
+		{ "getJediUnlockVariable", &LuaPlayerObject::getJediUnlockVariable},
+		{ "isPreVillageJedi", &LuaPlayerObject::isPreVillageJedi},
+		{ "sendJediUnlockMessage", &LuaPlayerObject::sendJediUnlockMessage},
+		{ "changeFirstName", &LuaPlayerObject::changeFirstName},
+		{ "changeLastName", &LuaPlayerObject::changeLastName},
 		{ "startSlicingSession", &LuaPlayerObject::startSlicingSession },
 		{ "setVisibility", &LuaPlayerObject::setVisibility },
 		{ "getPlayedTimeString", &LuaPlayerObject::getPlayedTimeString },
@@ -708,6 +713,41 @@ int LuaPlayerObject::getFrsCouncil(lua_State* L) {
 	lua_pushinteger(L, frsData->getCouncilType());
 
 	return 1;
+}
+
+int LuaPlayerObject::getJediUnlockVariable(lua_State* L) {
+	int value = lua_tointeger(L, -1);
+	lua_pushinteger(L, realObject->getJediUnlockVariable(value));
+
+	return 1;
+}
+
+int LuaPlayerObject::isPreVillageJedi(lua_State* L) {
+	bool retVal = realObject->isPreVillageJedi();
+
+	lua_pushboolean(L, retVal);
+
+	return 1;
+}
+
+int LuaPlayerObject::sendJediUnlockMessage(lua_State* L) {
+	realObject->sendJediUnlockMessage();
+
+	return 0;
+}
+
+int LuaPlayerObject::changeFirstName(lua_State* L) {
+	String name = lua_tostring(L, -1);
+	realObject->changeFirstName(name);
+
+	return 0;
+}
+
+int LuaPlayerObject::changeLastName(lua_State* L) {
+	String name = lua_tostring(L, -1);
+	realObject->changeLastName(name);
+
+	return 0;
 }
 
 int LuaPlayerObject::startSlicingSession(lua_State* L) {

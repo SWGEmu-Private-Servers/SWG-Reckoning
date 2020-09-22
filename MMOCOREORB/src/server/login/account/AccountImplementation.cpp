@@ -19,6 +19,8 @@ void AccountImplementation::initializeTransientMembers() {
 	created = 0;
 	banExpires = 0;
 	banAdmin = 0;
+	inactiveStaff = false;
+	lastLogin = 0;
 }
 
 void AccountImplementation::updateFromDatabase() {
@@ -47,7 +49,7 @@ void AccountImplementation::addGalaxyBan(GalaxyBanEntry* ban, uint32 galaxy) {
 
 void AccountImplementation::updateAccount() {
 	StringBuffer query;
-	query << "SELECT a.active, a.admin_level, "
+	query << "SELECT a.active, a.admin_level, a.inactive_staff, "
 			<< "IFNULL((SELECT b.reason FROM account_bans b WHERE b.account_id = a.account_id AND b.expires > UNIX_TIMESTAMP() ORDER BY b.expires DESC LIMIT 1), ''), "
 			<< "IFNULL((SELECT b.expires FROM account_bans b WHERE b.account_id = a.account_id AND b.expires > UNIX_TIMESTAMP() ORDER BY b.expires DESC LIMIT 1), 0), "
 			<< "IFNULL((SELECT b.issuer_id FROM account_bans b WHERE b.account_id = a.account_id AND b.expires > UNIX_TIMESTAMP() ORDER BY b.expires DESC LIMIT 1), 0) "
@@ -58,11 +60,20 @@ void AccountImplementation::updateAccount() {
 	if (result->next()) {
 		setActive(result->getBoolean(0));
 		setAdminLevel(result->getInt(1));
+		setInactiveStaff(result->getBoolean(2));
 
-		setBanReason(result->getString(2));
-		setBanExpires(result->getUnsignedInt(3));
-		setBanAdmin(result->getUnsignedInt(4));
+		setBanReason(result->getString(3));
+		setBanExpires(result->getUnsignedInt(4));
+		setBanAdmin(result->getUnsignedInt(5));
 	}
+
+	StringBuffer query1;
+	query1 << "SELECT UNIX_TIMESTAMP(timestamp) FROM account_log WHERE account_id = '" << accountID << "' ORDER BY UNIX_TIMESTAMP(timestamp) DESC LIMIT 1;";
+
+	Reference<ResultSet*> result1 = ServerDatabase::instance()->executeQuery(query1.toString());
+
+	if (result1->next())
+		setLastLogin(result1->getUnsignedInt(0));
 }
 
 void AccountImplementation::updateCharacters() {
@@ -149,6 +160,17 @@ uint32 AccountImplementation::getAgeInDays() const {
 	Time createdTime(getTimeCreated());
 	uint32 ageSecs = currentTime.getTime() - createdTime.getTime();
 	return ageSecs / 24 / 60 / 60;
+}
+
+uint32 AccountImplementation::getLastLoginInDays() const {
+	if (lastLogin == 0) {
+		throw Exception("Account Object has lastLogin set as 0 in getLastLoginInDays");
+	}
+
+	Time currentTime;
+	Time lastLoginTime(getLastLogin());
+	uint32 lastLoginSecs = currentTime.getTime() - lastLoginTime.getTime();
+	return lastLoginSecs / 24 / 60 / 60;
 }
 
 bool AccountImplementation::isSqlLoaded() const {

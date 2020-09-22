@@ -249,13 +249,16 @@ int ForceHealQueueCommand::runCommand(CreatureObject* creature, CreatureObject* 
 		else
 			creature->doCombatAnimation(targetCreature, animationCRC, 0, 0xFF);
 
-		if (currentForce < totalCost) {
+		int fCost = getFrsModifiedForceCost(creature, totalCost);
+
+		if (currentForce < fCost) {
 			playerObject->setForcePower(0);
 			creature->error("Did not have enough force to pay for the healing he did. Total cost of command: " + String::valueOf(totalCost) + ", player's current force: " + String::valueOf(currentForce));
 		} else {
-			playerObject->setForcePower(currentForce - totalCost);
+			playerObject->setForcePower(currentForce - fCost);
 		}
 
+		checkForTef(creature, targetCreature);
 		VisibilityManager::instance()->increaseVisibility(creature, visMod);
 		return SUCCESS;
 	} else {

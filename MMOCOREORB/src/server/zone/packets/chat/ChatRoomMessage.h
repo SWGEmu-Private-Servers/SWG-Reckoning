@@ -14,9 +14,9 @@ public:
 		insertInt(0xCD4CE444);  // Opcode
 		insertAscii("SWG");
 		insertAscii(galaxyName);
-		
-		insertAscii(sender.toLowerCase());
-		
+
+		insertAscii(sender);
+
 		insertInt(channelid); //Channel ID, Long converted to an Int.
 		
 		insertUnicode(message);

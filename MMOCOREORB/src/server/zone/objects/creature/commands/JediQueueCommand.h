@@ -225,11 +225,14 @@ public:
 	}
 
 
-	int getFrsModifiedForceCost(CreatureObject* creature) const {
+	int getFrsModifiedForceCost(CreatureObject* creature , int fCost = 0) const {
 		ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
 
 		if (ghost == nullptr)
 			return forceCost;
+
+		if (fCost == 0)
+			fCost = forceCost;
 
 		Locker locker(creature);
 
@@ -250,9 +253,9 @@ public:
 		}
 
 		if (manipulationMod == 0 || frsModifier == 0)
-			return forceCost;
+			return fCost;
 
-		return forceCost + (int)((manipulationMod * frsModifier) + .5);
+		return fCost + (int)((manipulationMod * frsModifier) + .5);
 	}
 
 	float getFrsModifiedExtraForceCost(CreatureObject* creature, float val) const {
@@ -268,21 +271,21 @@ public:
 
 		locker.release();
 
-		int manipulationMod = 0;
+		int controlMod = 0;
 		float frsModifier = 0;
 
 		if (councilType == FrsManager::COUNCIL_LIGHT) {
-			manipulationMod = creature->getSkillMod("force_manipulation_light");
+			controlMod = creature->getSkillMod("force_control_light");
 			frsModifier = frsLightExtraForceCostModifier;
 		} else if (councilType == FrsManager::COUNCIL_DARK) {
-			manipulationMod = creature->getSkillMod("force_manipulation_dark");
+			controlMod = creature->getSkillMod("force_control_dark");
 			frsModifier = frsDarkExtraForceCostModifier;
 		}
 
-		if (manipulationMod == 0 || frsModifier == 0)
+		if (controlMod  == 0 || frsModifier == 0)
 			return val;
 
-		return val + ((float)manipulationMod * frsModifier);
+		return val + ((float)controlMod * frsModifier);
 	}
 
 	void doForceCost(CreatureObject* creature) const {

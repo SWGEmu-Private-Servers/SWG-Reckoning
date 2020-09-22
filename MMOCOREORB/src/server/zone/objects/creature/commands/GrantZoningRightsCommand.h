@@ -36,7 +36,12 @@ public:
 
 		Locker clocker(city, creature);
 
-		if (!city->isMilitiaMember(creature->getObjectID())) {
+		PlayerObject* ghost = creature->getPlayerObject();
+
+		if (ghost == nullptr)
+			return GENERALERROR;
+
+		if (!city->isMilitiaMember(creature->getObjectID()) && !ghost->isPrivileged()) {
 			creature->sendSystemMessage("@city/city:grant_rights_fail"); //You must be the mayor of the city or a member of the city militia to grant zoning rights.
 			return GENERALERROR;
 		}

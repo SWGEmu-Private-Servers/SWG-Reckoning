@@ -1,0 +1,94 @@
+/*
+				Copyright <SWGEmu>
+		See file COPYING for copying conditions.*/
+
+package server.zone.managers.log;
+
+import engine.core.ManagedService;
+import engine.log.Logger;
+
+@dirty
+class ReckoningLogManager extends ManagedService implements Logger {
+	@dereferenced
+	private transient Logger staffCommandLog;
+
+	@dereferenced
+	private transient Logger staffTipLog;
+
+	@dereferenced
+	private transient Logger staffTradeLog;
+
+	@dereferenced
+	private transient Logger staffCreditTradeLog;
+
+	@dereferenced
+	private transient Logger playerTipLog;
+
+	@dereferenced
+	private transient Logger playerLargeTipLog;
+
+	@dereferenced
+	private transient Logger playerTradeLog;
+
+	@dereferenced
+	private transient Logger playerCreditTradeLog;
+
+	@dereferenced
+	private transient Logger playerLargeCreditTradeLog;
+
+	@dereferenced
+	private transient Logger frsKillLog;
+
+	@dereferenced
+	private transient Logger frsFightClubLog;
+
+	@dereferenced
+	private transient Logger structurePackupLog;
+
+	@dereferenced
+	private transient Logger systemStructurePackupLog;
+
+	@dereferenced
+	private transient Logger structureDestroyLog;
+
+	@dereferenced
+	private transient Logger auctionChatLog;
+
+	@dereferenced
+	private transient Logger generalChatLog;
+
+	@dereferenced
+	private transient Logger planetChatLog;
+
+	@dereferenced
+	private transient Logger spatialChatLog;
+
+	@dereferenced
+	private transient Logger pvpChatLog;
+
+	@dereferenced
+	private transient Logger pveChatLog;
+
+	@dereferenced
+	private transient Logger servicesChatLog;
+
+	@dereferenced
+	private transient Logger imperialChatLog;
+
+	@dereferenced
+	private transient Logger rebelChatLog;
+
+	@dereferenced
+	private transient Logger customChatLog;
+
+	public ReckoningLogManager() {
+		Logger.setLoggingName("ReckoningLogManager");
+		Logger.setLogging(false);
+		Logger.setGlobalLogging(true);
+	}
+
+	public native void initialize();
+
+	public native void logAction(int logType, final string message);
+
+}

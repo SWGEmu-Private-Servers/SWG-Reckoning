@@ -57,6 +57,7 @@ class CreatureObject extends TangibleObject {
     	// deprectated
 	protected int bankCredits;
 	protected int cashCredits;
+	protected int reckoningCredits;
 
 	protected int hueValue;
 
@@ -199,6 +200,9 @@ class CreatureObject extends TangibleObject {
 	protected transient Vector3 lastCombatPosition;
 
 	protected transient string alternateAppearance;
+
+	@dereferenced
+	protected Time trapImmunityTime;
 
 	public static final int HUMAN = 0;
 	public static final int RODIAN = 1;
@@ -798,10 +802,16 @@ class CreatureObject extends TangibleObject {
 	public native void addCashCredits(int credits, boolean notifyClient = true);
 
 	@preLocked
+	public native void addReckoningCredits(int credits);
+
+	@preLocked
 	public native void clearBankCredits(boolean notifyClient = true);
 
 	@preLocked
 	public native void clearCashCredits(boolean notifyClient = true);
+
+	@preLocked
+	public native void clearReckoningCredits();
 
 	@preLocked
 	public native void transferCredits(int cash, int bank, boolean notifyClient = true);
@@ -816,6 +826,9 @@ class CreatureObject extends TangibleObject {
 	public native void subtractCashCredits(int credits);
 
 	@preLocked
+	public native void subtractReckoningCredits(int credits);
+
+	@preLocked
 	public native boolean subtractCredits(int credits);
 
 	@dirty
@@ -823,6 +836,9 @@ class CreatureObject extends TangibleObject {
 
 	@dirty
 	public native boolean verifyBankCredits(int credits);
+
+	@dirty
+	public native boolean verifyReckoningCredits(int credits);
 
 	@dirty
 	public native boolean verifyCredits(int credits);
@@ -1492,6 +1508,11 @@ class CreatureObject extends TangibleObject {
 	@read
 	public int getCashCredits() {
 		return creditObject.getCashCredits();
+	}
+
+	@read
+	public int getReckoningCredits() {
+		return creditObject.getReckoningCredits();
 	}
 
 	@read
@@ -2199,6 +2220,22 @@ class CreatureObject extends TangibleObject {
 
 	@preLocked
 	public native void schedulePersonalEnemyFlagTasks();
+
+	@preLocked
+	public void updateTrapImmunityTime(int duration) {
+		trapImmunityTime.updateToCurrentTime();
+		trapImmunityTime.addMiliTime(duration);
+	}
+
+	@dirty
+	public boolean hasTrapImmunity() {
+		return !trapImmunityTime.isPast();
+	}
+
+	@dirty
+	public native boolean isHumanoid() {
+		return (getSpecies() > -1 && getSpecies() < 8) || getSpecies() == 33 || getSpecies() == 49;
+	}
 
 	@preLocked
 	public native void setHue(int hueIndex);

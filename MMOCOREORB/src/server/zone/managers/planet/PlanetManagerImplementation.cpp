@@ -36,6 +36,7 @@
 #include "server/zone/managers/structure/StructureManager.h"
 #include "server/zone/managers/collision/NavMeshManager.h"
 
+
 ClientPoiDataTable PlanetManagerImplementation::clientPoiDataTable;
 Mutex PlanetManagerImplementation::poiMutex;
 
@@ -118,7 +119,10 @@ void PlanetManagerImplementation::loadLuaConfig() {
 	Lua* lua = new Lua();
 	lua->init();
 
-	lua->runFile("scripts/managers/planet_manager.lua");
+	bool res = lua->runFile("custom_scripts/managers/planet_manager.lua");
+
+	if (!res)
+		res = lua->runFile("scripts/managers/planet_manager.lua");
 
 	//Get's the configuration settings object for this planet.
 	LuaObject luaObject = lua->getGlobalObject(planetName);
@@ -217,6 +221,12 @@ void PlanetManagerImplementation::loadPlanetObjects(LuaObject* luaObject) {
 
 		// Don't spawn character builder terminals if they're not enabled
 		if (templateFile == "object/tangible/terminal/terminal_character_builder.iff" && !ConfigManager::instance()->getCharacterBuilderEnabled()) {
+			planetObject.pop();
+			continue;
+		}
+
+		// Don't spawn enhancement terminals if they're not enabled
+		if (templateFile == "object/tangible/terminal/terminal_enhancement.iff" && !ConfigManager::instance()->getEnhancementTerminalEnabled()) {
 			planetObject.pop();
 			continue;
 		}

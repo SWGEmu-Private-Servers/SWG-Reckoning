@@ -484,7 +484,10 @@ public:
 
 			body << "    Zone:\t";
 			Zone* zone = structure->getZone();
-			if (zone == nullptr) {
+
+			if (structure->isPackedUp()) {
+				body << "Packed Up" << endl;
+			} else if (zone == nullptr) {
 				body << "nullptr" << endl;
 			} else {
 				body << zone->getZoneName() << endl;

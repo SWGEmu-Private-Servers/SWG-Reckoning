@@ -130,6 +130,7 @@
 #include "conf/ConfigManager.h"
 #include "tre3/TreeArchive.h"
 
+#include "templates/tangible/ETerminalTemplate.h"
 
 Lua* TemplateManager::luaTemplatesInstance = nullptr;
 
@@ -554,6 +555,8 @@ void TemplateManager::registerTemplateObjects() {
 	templateFactory.registerObject<DroidPersonalityModuleTemplate>(SharedObjectTemplate::DROIDMODULEPERSONALITY);
 	templateFactory.registerObject<VehicleObjectTemplate>(SharedObjectTemplate::VEHICLE);
 	templateFactory.registerObject<XpPurchaseTemplate>(SharedObjectTemplate::XPPURCHASE);
+
+	templateFactory.registerObject<ETerminalTemplate>(SharedObjectTemplate::ETERMINAL);
 }
 
 void TemplateManager::registerFunctions() {
@@ -761,6 +764,8 @@ void TemplateManager::registerGlobals() {
 	luaTemplatesInstance->setGlobalInt("STIM_C", StimPackTemplate::STIM_C);
 	luaTemplatesInstance->setGlobalInt("STIM_D", StimPackTemplate::STIM_D);
 	luaTemplatesInstance->setGlobalInt("STIM_E", StimPackTemplate::STIM_E);
+
+	luaTemplatesInstance->setGlobalInt("ETERMINAL", SharedObjectTemplate::ETERMINAL);
 
 	luaTemplatesInstance->setGlobalInt("CLONER_STANDARD", CloningBuildingObjectTemplate::STANDARD);
 	luaTemplatesInstance->setGlobalInt("CLONER_PLAYER_CITY", CloningBuildingObjectTemplate::PLAYER_CITY);

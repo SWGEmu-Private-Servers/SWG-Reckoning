@@ -49,6 +49,8 @@ protected:
 	float frsLightMaxDamageModifier;
 	float frsDarkMinDamageModifier;
 	float frsDarkMaxDamageModifier;
+	float frsLightSpeedModifier;
+	float frsDarkSpeedModifier;
 
 	int coneRange;
 	int range;
@@ -101,6 +103,8 @@ public:
 		frsLightMaxDamageModifier = 0;
 		frsDarkMinDamageModifier = 0;
 		frsDarkMaxDamageModifier = 0;
+		frsLightSpeedModifier = 0;
+		frsDarkSpeedModifier = 0;
 
 		// Force Power is only set in Jedi-skills.
 		forceCostMultiplier = 0;
@@ -182,6 +186,7 @@ public:
 				if (ghost->isAFK())
 					return GENERALERROR;
 
+				/*
 				ManagedReference<TangibleObject*> targetTano = targetObject.castTo<TangibleObject*>();
 
 				if (targetTano != nullptr && creature->getFaction() != 0 && targetTano->getFaction() != 0 && targetTano->getFaction() != creature->getFaction() && creature->getFactionStatus() != FactionStatus::OVERT) {
@@ -210,6 +215,7 @@ public:
 							ghost->doFieldFactionChange(FactionStatus::OVERT);
 					}
 				}
+				*/
 			}
 		}
 
@@ -870,6 +876,14 @@ public:
 	}
 	void setFrsDarkMaxDamageModifier(float val) {
 		frsDarkMaxDamageModifier = val;
+	}
+
+	void setFrsLightSpeedModifier(float val) {
+		frsLightSpeedModifier = val;
+	}
+
+	void setFrsDarkSpeedModifier(float val) {
+		frsDarkSpeedModifier = val;
 	}
 
 	inline float getFrsLightMinDamageModifier() const {

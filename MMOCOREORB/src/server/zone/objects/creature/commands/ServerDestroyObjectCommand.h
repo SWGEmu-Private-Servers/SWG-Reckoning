@@ -12,6 +12,7 @@
 #include "server/zone/managers/auction/AuctionsMap.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 
+#include "server/zone/objects/player/sessions/DestroyControlDeviceSession.h"
 
 class ServerDestroyObjectCommand : public QueueCommand {
 public:
@@ -74,6 +75,18 @@ public:
 			}
 		}
 
+		if (object->isStructureControlDevice() || object->isVendorControlDevice()) {
+			if (creature->containsActiveSession(SessionFacadeType::DESTROYCONTROLDEVICE)) {
+				creature->sendSystemMessage("ERROR: You already have an outstanding destroy request for another control device.");
+				return GENERALERROR;
+			}
+
+			ManagedReference<DestroyControlDeviceSession*> session = new DestroyControlDeviceSession(creature, object);
+
+			session->initializeSession();
+			return SUCCESS;
+		}
+
 		TransactionLog trx(creature, TrxCode::SERVERDESTROYOBJECT, object);
 
 		if (object->isASubChildOf(creature)){
@@ -128,6 +141,18 @@ public:
 						}
 					}
 				}
+			}
+
+			if (object->isStructureControlDevice() || object->isVendorControlDevice()) {
+				if (creature->containsActiveSession(SessionFacadeType::DESTROYCONTROLDEVICE)) {
+					creature->sendSystemMessage("ERROR: You already have an outstanding destroy request for another control device.");
+					return GENERALERROR;
+				}
+
+				ManagedReference<DestroyControlDeviceSession*> session = new DestroyControlDeviceSession(creature, object);
+
+				session->initializeSession();
+				return SUCCESS;
 			}
 
 			if (trx.isVerbose()) {

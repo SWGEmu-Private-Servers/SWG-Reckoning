@@ -9,6 +9,7 @@
 #include "server/zone/managers/jedi/JediManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
 
+
 void CharacterBuilderTerminalImplementation::loadTemplateData(SharedObjectTemplate* templateData) {
 	TangibleObjectImplementation::loadTemplateData(templateData);
 
@@ -27,7 +28,12 @@ void CharacterBuilderTerminalImplementation::initializeTransientMembers() {
 }
 
 int CharacterBuilderTerminalImplementation::handleObjectMenuSelect(CreatureObject* player, byte selectedID) {
-	if (!ConfigManager::instance()->getCharacterBuilderEnabled())
+	PlayerObject* ghost = player->getPlayerObject();
+
+	if (ghost == nullptr)
+		return 1;
+
+	if (!ConfigManager::instance()->getCharacterBuilderEnabled() && !ghost->isPrivileged())
 		return 1;
 
 	debug() << "entering start terminal radial call";
@@ -41,7 +47,12 @@ int CharacterBuilderTerminalImplementation::handleObjectMenuSelect(CreatureObjec
 }
 
 void CharacterBuilderTerminalImplementation::sendInitialChoices(CreatureObject* player) {
-	if (!ConfigManager::instance()->getCharacterBuilderEnabled())
+	PlayerObject* ghost = player->getPlayerObject();
+
+	if (ghost == nullptr)
+		return;
+
+	if (!ConfigManager::instance()->getCharacterBuilderEnabled() && !ghost->isPrivileged())
 		return;
 
 	debug() << "entering sendInitialChoices";
@@ -58,10 +69,10 @@ void CharacterBuilderTerminalImplementation::sendInitialChoices(CreatureObject* 
 	player->getPlayerObject()->addSuiBox(sui);
 }
 
-void CharacterBuilderTerminalImplementation::enhanceCharacter(CreatureObject* player) {
+void CharacterBuilderTerminalImplementation::builderEnhanceCharacter(CreatureObject* player) {
 	PlayerManager* pm = player->getZoneServer()->getPlayerManager();
 
-	pm->enhanceCharacter(player);
+	pm->builderEnhanceCharacter(player);
 
 	ManagedReference<PlayerObject*> ghost = player->getPlayerObject();
 
@@ -74,7 +85,7 @@ void CharacterBuilderTerminalImplementation::enhanceCharacter(CreatureObject* pl
 		if (pet != nullptr) {
 			Locker crossLocker(pet, player);
 
-			pm->enhanceCharacter(pet);
+			pm->builderEnhanceCharacter(pet);
 		}
 	}
 }

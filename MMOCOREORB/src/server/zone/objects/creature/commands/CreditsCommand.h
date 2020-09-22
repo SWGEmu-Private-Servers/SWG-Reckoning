@@ -33,7 +33,7 @@ public:
 
 			StringTokenizer args(arguments.toString());
 
-			if(object == nullptr || !object->isPlayerCreature()) {
+			if (object == nullptr || !object->isPlayerCreature()) {
 
 				String firstName;
 				if(args.hasMoreTokens()) {
@@ -77,6 +77,11 @@ public:
 					success = true;
 				}
 
+				if (location.toLowerCase() == "reckoning") {
+					player->addReckoningCredits(amount);
+					success = true;
+				}
+
 			} else if (action == "subtract") {
 
 				if (location.toLowerCase() == "cash") {
@@ -102,15 +107,24 @@ public:
 
 					success = true;
 				}
+
+				if (location.toLowerCase() == "reckoning") {
+					if (player->verifyReckoningCredits(amount))
+						player->subtractReckoningCredits(amount);
+					else
+						player->clearReckoningCredits();
+
+					success = true;
+				}
 			}
 
-			if(success)
+			if (success)
 				creature->sendSystemMessage("Credits have been deposited successfully for " + player->getFirstName());
 			else
-				creature->sendSystemMessage("invalid arguments for credits command:  /credits <firstname> <add/subtract> <amount> <bank/cash>");
+				creature->sendSystemMessage("invalid arguments for credits command:  /credits <firstname> <add/subtract> <amount> <bank/cash/reckoning>");
 
 		} catch (Exception& e) {
-			creature->sendSystemMessage("invalid arguments for credits command:  /credits <firstname> <add/subtract> <amount> <bank/cash>");
+			creature->sendSystemMessage("invalid arguments for credits command:  /credits <firstname> <add/subtract> <amount> <bank/cash/reckoning>");
 		}
 
 		return SUCCESS;

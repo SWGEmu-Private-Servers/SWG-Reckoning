@@ -8,6 +8,7 @@ import system.util.SortedVector;
 import engine.core.ManagedService;
 import system.thread.atomic.AtomicInteger;
 import server.zone.objects.scene.SceneObject;
+import server.zone.objects.creature.CreatureObject;
 import server.zone.objects.creature.ai.AiAgent;
 import server.zone.managers.crafting.CraftingManager;
 import server.zone.managers.object.ObjectManager;
@@ -165,6 +166,8 @@ class LootManager extends ManagedService implements Logger {
 	public native string getRandomLootableMod( unsigned int sceneObjectType );
 
 	public native int calculateLootCredits(int level);
+
+	public native int calculateReckoningLootCredits(CreatureObject object, AiAgent creature);
 
 	@local
 	public native boolean createLoot(@dereferenced TransactionLog trx, SceneObject container, AiAgent creature);

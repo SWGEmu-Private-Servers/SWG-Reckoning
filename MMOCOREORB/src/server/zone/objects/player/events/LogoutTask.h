@@ -14,6 +14,7 @@
 #ifndef LOGOUTTASK_H_
 #define LOGOUTTASK_H_
 
+#include "server/zone/objects/player/FactionStatus.h"
 #include "server/zone/packets/player/LogoutMessage.h"
 
 class LogoutTask: public Task {
@@ -51,6 +52,14 @@ public:
 			if (creature->isBleeding() || creature->isPoisoned() || creature->isDiseased() || creature->isOnFire() || !creature->isSitting()) {
 				cancelLogout();
 				return;
+			}
+
+			//Players in PvP combat cannot logout. Run for the hills!
+			if (creature->getFactionStatus() == FactionStatus::OVERT || player->hasGcwTef() || player->hasBhTef() || player->hasCityTef()) {
+				if (creature->isInCombat()) {
+					cancelLogout();
+					return;
+				}
 			}
 
 			timeLeft -= 5;

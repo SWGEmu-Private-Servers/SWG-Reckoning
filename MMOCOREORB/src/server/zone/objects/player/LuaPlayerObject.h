@@ -90,6 +90,12 @@ namespace player {
 		int setVisibility(lua_State* L);
 		int getPlayedTimeString(lua_State* L);
 
+		int getJediUnlockVariable(lua_State* L);
+		int isPreVillageJedi(lua_State* L);
+		int sendJediUnlockMessage(lua_State* L);
+		int changeFirstName(lua_State* L);
+		int changeLastName(lua_State* L);
+
 	private:
 		// The pointer to the 'real object' defined in object.cc
 		PlayerObject* realObject;

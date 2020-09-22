@@ -838,8 +838,11 @@
 #include "InspacerrCommand.h"
 #include "RequestSpaceTrainerCommand.h"
 
-
-
+#include "GuildListCommand.h"
+#include "RemovePvpStatesCommand.h"
+#include "ShowPlayerStatsCommand.h"
+#include "ShowPvpStatsCommand.h"
+#include "StructureListCommand.h"
+#include "PackupStructureCommand.h"
 
 #endif /* COMMANDSNEW_H_ */
-

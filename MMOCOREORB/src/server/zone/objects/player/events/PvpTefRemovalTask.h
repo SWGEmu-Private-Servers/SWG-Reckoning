@@ -5,6 +5,7 @@
 #include "server/zone/objects/player/PlayerObject.h"
 #include "templates/params/creature/CreatureFlag.h"
 
+
 namespace server {
 namespace zone {
 namespace objects {
@@ -33,7 +34,12 @@ public:
 
 		Locker locker(player);
 
-		if (ghost->hasTef()) {
+		if (ConfigManager::instance()->getTefEnabled()) {
+			if (ghost->isInOpposingArea())
+				ghost->updateLastGcwPvpCombatActionTimestamp();
+		}
+
+		if (ghost->hasCrackdownTef() || ghost->hasGcwTef() || ghost->hasBhTef()) {
 			auto gcwCrackdownTefMs = ghost->getLastGcwCrackdownCombatActionTimestamp().miliDifference();
 			auto gcwTefMs = ghost->getLastGcwPvpCombatActionTimestamp().miliDifference();
 			auto bhTefMs = ghost->getLastBhPvpCombatActionTimestamp().miliDifference();
@@ -41,9 +47,12 @@ public:
 			rescheduleTime = gcwCrackdownTefMs < rescheduleTime ? gcwCrackdownTefMs : rescheduleTime;
 			this->reschedule(llabs(rescheduleTime));
 		} else {
-			ghost->updateInRangeBuildingPermissions();
+			if (!ghost->hasCityTef())
+				player->clearPvpStatusBit(CreatureFlag::TEF);
+
 			ghost->setCrackdownTefTowards(0, false);
-			player->clearPvpStatusBit(CreatureFlag::TEF);
+			ghost->updateInRangeBuildingPermissions();
+			player->broadcastPvpStatusBitmask();
 		}
 
 		if (!ghost->hasBhTef())

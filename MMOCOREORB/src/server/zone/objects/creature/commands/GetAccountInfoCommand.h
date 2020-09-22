@@ -139,6 +139,7 @@ public:
 		header << "Station ID: " << String::valueOf(account->getStationID()) << endl;
 		header << "Admin Level: " << String::valueOf(account->getAdminLevel()) << endl;
 		header << "Created: " << createdTime.getFormattedTime() << endl;
+		header << "Days since last login: " << String::valueOf(account->getLastLoginInDays()) << endl;
 
 		if(account->isBanned()) {
 			header << "\\#FF0000 (BANNED)\\#FFFFFF " << endl;

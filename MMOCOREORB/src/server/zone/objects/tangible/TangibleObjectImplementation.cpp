@@ -35,6 +35,11 @@
 #include "templates/faction/Factions.h"
 #include "server/zone/objects/player/FactionStatus.h"
 
+#include "server/zone/managers/city/CityManager.h"
+#include "server/zone/managers/city/CityRemoveAmenityTask.h"
+#include "server/zone/objects/player/sui/inputbox/SuiInputBox.h"
+#include "server/zone/packets/object/ObjectMenuResponse.h"
+
 void TangibleObjectImplementation::initializeTransientMembers() {
 	SceneObjectImplementation::initializeTransientMembers();
 
@@ -117,6 +122,72 @@ void TangibleObjectImplementation::notifyLoadFromDatabase() {
 	}
 }
 
+void TangibleObjectImplementation::fillObjectMenuResponse(ObjectMenuResponse* menuResponse, CreatureObject* player) {
+	SceneObjectImplementation::fillObjectMenuResponse(menuResponse, player);
+
+	SceneObject* inventory = player->getSlottedObject("inventory");
+
+	if (ConfigManager::instance()->getItemRenamingEnabled()) {
+		if (inventory != nullptr && getParent().get() == inventory) {
+			if (craftersName == player->getFirstName() && !isContainerObject())
+				menuResponse->addRadialMenuItem(200, 3, "Rename Item"); //Rename Item
+		}
+	}
+
+	ManagedReference<CityRegion*> city = player->getCityRegion().get();
+
+	if (isBazaarTerminal() && city != nullptr && getParent().get() == nullptr) {
+		if (city->isMayor(player->getObjectID())) {
+			menuResponse->addRadialMenuItem(201, 3, "Remove");
+
+			menuResponse->addRadialMenuItem(202, 3, "@city/city:align"); // Align
+			menuResponse->addRadialMenuItemToRadialID(202, 203, 3, "@city/city:north"); // North
+			menuResponse->addRadialMenuItemToRadialID(202, 204, 3, "@city/city:east"); // East
+			menuResponse->addRadialMenuItemToRadialID(202, 205, 3, "@city/city:south"); // South
+			menuResponse->addRadialMenuItemToRadialID(202, 206, 3, "@city/city:west"); // West
+			return;
+		}
+	}
+}
+
+int TangibleObjectImplementation::handleObjectMenuSelect(CreatureObject* player, byte selectedID) {
+	ManagedReference<CityRegion*> city = player->getCityRegion().get();
+
+	if (selectedID == 200) {
+		ManagedReference<SuiInputBox*> inputBox = new SuiInputBox(player, SuiWindowType::OBJECT_NAME, 0x00);
+
+		inputBox->setPromptTitle("@sui:set_name_title");
+		inputBox->setPromptText("@sui:set_name_prompt");
+		inputBox->setUsingObject(_this.getReferenceUnsafeStaticCast());
+		inputBox->setMaxInputSize(255);
+
+		inputBox->setDefaultInput(getCustomObjectName().toString());
+
+		player->getPlayerObject()->addSuiBox(inputBox);
+		player->sendMessage(inputBox->generateMessage());
+
+		return 0;
+
+	} else if (selectedID == 201) {
+		if (city != nullptr && city->isMayor(player->getObjectID())) {
+			CityRemoveAmenityTask* task = new CityRemoveAmenityTask(_this.getReferenceUnsafeStaticCast(), city);
+			task->execute();
+
+			player->sendSystemMessage("The Bazaar Terminal has been removed from the city");
+		}
+		return 0;
+
+	} else if (selectedID == 203 || selectedID == 204 || selectedID == 205 || selectedID == 206) {
+		if (city != nullptr && city->isMayor(player->getObjectID())) {
+			CityManager* cityManager = getZoneServer()->getCityManager();
+			cityManager->alignAmenity(city, player, _this.getReferenceUnsafeStaticCast(), selectedID - 203);
+		}
+		return 0;
+	}
+
+	return SceneObjectImplementation::handleObjectMenuSelect(player, selectedID);
+}
+
 void TangibleObjectImplementation::destroyObjectFromDatabase(bool destroyContainedObjects) {
 	if (hasAntiDecayKit()) {
 		AntiDecayKit* adk = antiDecayKitObject.castTo<AntiDecayKit*>();
@@ -172,7 +243,11 @@ void TangibleObjectImplementation::setFactionStatus(int status) {
 		uint32 oldStatusBitmask = pvpStatusBitmask;
 
 		if (factionStatus == FactionStatus::COVERT) {
-			creature->sendSystemMessage("@faction_recruiter:covert_complete");
+			if (ConfigManager::instance()->getTefEnabled()) {
+				creature->sendSystemMessage("You are now covert. Attacking enemy NPCs or players will cause a temporary enemy flag.");
+			} else {
+				creature->sendSystemMessage("@faction_recruiter:covert_complete");
+			}
 
 			if (pvpStatusBitmask & CreatureFlag::OVERT)
 				pvpStatusBitmask -= CreatureFlag::OVERT;
@@ -325,7 +400,7 @@ void TangibleObjectImplementation::setPvpStatusBitmask(uint32 bitmask, bool noti
 			if (pet == nullptr)
 				continue;
 
-			Locker clocker(pet, asTangibleObject());
+			//Locker clocker(pet, asTangibleObject());
 
 			pet->setPvpStatusBitmask(bitmask);
 		}
@@ -876,8 +951,8 @@ Reference<FactoryCrate*> TangibleObjectImplementation::createFactoryCrate(int ma
 
 	Locker locker(crate);
 
-	crate->setMaxCapacity(maxSize);
-
+	//crate->setMaxCapacity(maxSize); SWGEmu Default
+	crate->setMaxCapacity(1000);
 
 	if (insertSelf) {
 		if (!crate->transferObject(asTangibleObject(), -1, false)) {
@@ -1167,6 +1242,14 @@ bool TangibleObjectImplementation::isCityStatue() const {
 
 bool TangibleObjectImplementation::isCityFountain() const {
 	return (templateObject != nullptr && templateObject->getFullTemplateString().contains("object/tangible/furniture/city/fountain"));
+}
+
+bool TangibleObjectImplementation::isCityImperialSign() const {
+	return (templateObject != nullptr && templateObject->getFullTemplateString() == "object/tangible/furniture/city/imperial_control_sign.iff");
+}
+
+bool TangibleObjectImplementation::isCityRebelSign() const {
+	return (templateObject != nullptr && templateObject->getFullTemplateString() == "object/tangible/furniture/city/rebel_control_sign.iff");
 }
 
 bool TangibleObjectImplementation::isRebel() const {
